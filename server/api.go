@@ -108,12 +108,23 @@ func (s *Server) Handler() http.Handler {
 // --- API Key Authentication ---
 
 // requireAPIKey validates the X-API-Key header for game client requests.
+// Also allows requests that carry valid admin Basic Auth credentials,
+// so the admin dashboard can call game endpoints without a separate key.
 func (s *Server) requireAPIKey(r *http.Request) bool {
 	if s.cfg.GameAPIKey == "" {
 		return true // No key configured = open access
 	}
 	key := r.Header.Get("X-API-Key")
-	return key == s.cfg.GameAPIKey
+	if key == s.cfg.GameAPIKey {
+		return true
+	}
+	// Allow admin-authenticated requests (dashboard)
+	if s.cfg.AdminPassword != "" {
+		if _, pass, ok := r.BasicAuth(); ok && pass == s.cfg.AdminPassword {
+			return true
+		}
+	}
+	return false
 }
 
 // extractHostToken returns the host token from the request.

@@ -123,7 +123,7 @@ enabled = true
 auto_block = true
 
 # Number of rate limit violations before auto-blocking.
-auto_block_threshold = 5
+auto_block_threshold = 100
 
 # Duration of the first auto-block.
 auto_block_duration = "1h"
@@ -133,7 +133,7 @@ auto_block_escalation = true
 
 # Flood detection: block IP if it opens this many connections
 # within the flood window.
-flood_connections = 50
+flood_connections = 500
 flood_window = "10s"
 flood_block_duration = "1h"
 
