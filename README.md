@@ -106,6 +106,7 @@ See [docs/unity-sdk.md](docs/unity-sdk.md) for full integration guide.
 | [API Reference](docs/api-reference.md) | REST & WebSocket API |
 | [Architecture](docs/architecture.md) | System design deep dive |
 | [Unity SDK](docs/unity-sdk.md) | Unity/Mirror integration |
+| [Testing](docs/testing.md) | Running and writing tests |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues & fixes |
 | [Contributing](docs/contributing.md) | Development guide |
 | [Changelog](docs/changelog.md) | Version history |

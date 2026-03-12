@@ -19,8 +19,8 @@ services:
     container_name: natpunch-server
     ports:
       - "8080:8080"   # REST API + WebSocket signaling
-      - "80:80"       # Let's Encrypt ACME (only used if domain is set)
-      - "443:443"     # HTTPS (only used if domain is set)
+      # - "80:80"     # Let's Encrypt ACME (only needed in production with a domain)
+      # - "443:443"   # HTTPS (only needed in production with a domain)
     volumes:
       # Config file (optional — works with defaults if absent)
       - ./config.toml:/app/config.toml:ro

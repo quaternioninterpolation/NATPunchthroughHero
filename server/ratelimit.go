@@ -197,7 +197,7 @@ func (rl *RateLimiter) getOrCreate(ip string) *ipLimiter {
 	limiter := &ipLimiter{
 		// Per-IP: convert RPM to per-second rate
 		general:   rate.NewLimiter(rate.Limit(float64(rl.cfg.PerIPRPM)/60.0), rl.cfg.PerIPBurst),
-		websocket: rate.NewLimiter(rate.Limit(float64(rl.cfg.WSPerIPRPM)/60.0), 2),
+		websocket: rate.NewLimiter(rate.Limit(float64(rl.cfg.WSPerIPRPM)/60.0), rl.cfg.WSPerIPMax*2),
 		games:     rate.NewLimiter(rate.Limit(float64(rl.cfg.GamesPerIPRPH)/3600.0), 3),
 		joins:     rate.NewLimiter(rate.Limit(float64(rl.cfg.JoinsPerIPRPM)/60.0), 5),
 		turn:      rate.NewLimiter(rate.Limit(float64(rl.cfg.TurnPerIPRPH)/3600.0), 2),

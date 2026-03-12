@@ -85,10 +85,10 @@ ws_per_ip_rpm = 5
 ws_per_ip_max = 3
 
 # Game registrations per IP per hour (spam protection).
-games_per_ip_rph = 10
+games_per_ip_rph = 100
 
 # Join requests per minute per IP.
-joins_per_ip_rpm = 20
+joins_per_ip_rpm = 200
 
 # TURN credential requests per IP per hour.
 turn_per_ip_rph = 10
