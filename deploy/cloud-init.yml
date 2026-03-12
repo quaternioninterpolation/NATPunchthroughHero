@@ -1,0 +1,99 @@
+#cloud-config
+# ══════════════════════════════════════════════════════════════
+# NAT Punchthrough Hero — Cloud-Init Config
+# ══════════════════════════════════════════════════════════════
+#
+# Paste this into the "User Data" / "Cloud-Init" field when
+# provisioning a VPS on any provider (Hetzner, DigitalOcean,
+# Vultr, Linode, AWS, etc.)
+#
+# It will:
+#   1. Install Docker
+#   2. Open firewall ports
+#   3. Clone the repo
+#   4. Auto-generate config with random secrets
+#   5. Start the server
+#
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - curl
+  - git
+  - openssl
+  - ca-certificates
+
+# Install Docker via the official script
+runcmd:
+  # Install Docker
+  - curl -fsSL https://get.docker.com | sh
+  - systemctl enable docker
+  - systemctl start docker
+
+  # Open firewall ports (UFW — common on Ubuntu)
+  - |
+    if command -v ufw >/dev/null 2>&1; then
+      ufw allow 80/tcp
+      ufw allow 443/tcp
+      ufw allow 8080/tcp
+      ufw allow 3478/tcp
+      ufw allow 3478/udp
+      ufw allow 49152:50175/udp
+    fi
+
+  # Clone repository
+  - git clone https://github.com/you/natpunch.git /opt/natpunch
+
+  # Generate secrets
+  - |
+    EXTERNAL_IP=$(curl -4 -s --connect-timeout 10 https://api.ipify.org || echo "auto")
+    TURN_SECRET=$(openssl rand -hex 32)
+    ADMIN_PASS=$(openssl rand -base64 16 | tr -d '=/+' | head -c 16)
+    API_KEY=$(openssl rand -hex 24)
+
+    cat > /opt/natpunch/config.toml <<EOF
+    external_ip = "$EXTERNAL_IP"
+    http_port = 8080
+    turn_secret = "$TURN_SECRET"
+    admin_password = "$ADMIN_PASS"
+    game_api_key = "$API_KEY"
+
+    [rate_limit]
+    enabled = true
+
+    [ip_filter]
+    mode = "off"
+
+    [protection]
+    enabled = true
+    EOF
+
+    # Save credentials for the admin
+    cat > /root/natpunch-credentials.txt <<CRED
+    NAT Punchthrough Hero — Credentials
+    ====================================
+    Generated: $(date -u)
+    Server IP: $EXTERNAL_IP
+
+    Dashboard: http://$EXTERNAL_IP:8080/admin/
+    Admin User: admin
+    Admin Pass: $ADMIN_PASS
+    API Key: $API_KEY
+
+    Config: /opt/natpunch/config.toml
+    Logs: cd /opt/natpunch && docker compose logs -f
+    CRED
+    chmod 600 /root/natpunch-credentials.txt
+
+  # Start services
+  - cd /opt/natpunch && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+  # Log success
+  - echo "NAT Punchthrough Hero deployed successfully!" >> /var/log/cloud-init-output.log
+  - echo "Credentials saved to /root/natpunch-credentials.txt" >> /var/log/cloud-init-output.log
+
+final_message: |
+  NAT Punchthrough Hero is running!
+  Credentials: /root/natpunch-credentials.txt
+  Dashboard: http://$EXTERNAL_IP:8080/admin/

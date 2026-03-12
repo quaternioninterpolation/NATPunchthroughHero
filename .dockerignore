@@ -1,0 +1,25 @@
+# Docker build context ignores
+.git
+.gitignore
+*.md
+docs/
+unity-sdk/
+test-client/
+deploy/
+LICENSE
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib

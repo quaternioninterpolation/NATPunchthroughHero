@@ -1,0 +1,35 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+natpunch-server
+
+# Config with secrets (keep example)
+config.toml
+.env
+
+# TLS certificates
+certs/
+*.pem
+
+# Test
+*.test
+*.out
+coverage.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Docker volumes
+data/

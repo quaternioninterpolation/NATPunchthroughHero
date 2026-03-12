@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAT Punchthrough Hero — Admin Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e1e4ed;
+    --text-dim: #8b8fa3;
+    --accent: #6c63ff;
+    --green: #4ade80;
+    --yellow: #facc15;
+    --red: #f87171;
+    --blue: #60a5fa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  header h1 { font-size: 1.25rem; font-weight: 600; }
+  header h1 span { color: var(--accent); }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  .status-badge.online { background: rgba(74,222,128,0.15); color: var(--green); }
+  .status-badge.offline { background: rgba(248,113,113,0.15); color: var(--red); }
+  .status-badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .stat-card .label { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 4px; }
+  .stat-card .value { font-size: 1.75rem; font-weight: 700; }
+  .stat-card .sub { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  th { color: var(--text-dim); font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(108,99,255,0.05); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge.direct { background: rgba(74,222,128,0.15); color: var(--green); }
+  .badge.punched { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .badge.relayed { background: rgba(250,204,21,0.15); color: var(--yellow); }
+  .badge.blocked { background: rgba(248,113,113,0.15); color: var(--red); }
+
+  /* Actions */
+  .btn {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.danger { border-color: var(--red); color: var(--red); }
+  .btn.danger:hover { background: rgba(248,113,113,0.1); }
+
+  /* IP Input */
+  .input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .input-row input {
+    flex: 1;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+  .input-row input:focus { outline: none; border-color: var(--accent); }
+
+  /* Config display */
+  .config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+  }
+  .config-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .config-item .key { font-size: 0.75rem; color: var(--text-dim); }
+  .config-item .val { font-size: 0.9rem; font-weight: 500; }
+
+  .empty { text-align: center; padding: 40px; color: var(--text-dim); }
+  .refresh-note { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1><span>NAT Punchthrough</span> Hero</h1>
+    <div>
+      <span id="status-badge" class="status-badge online">Online</span>
+      <span style="color:var(--text-dim);font-size:0.8rem;margin-left:12px">
+        Uptime: <span id="uptime">—</span>
+      </span>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="label">Active Games</div>
+      <div class="value" id="active-games">—</div>
+      <div class="sub" id="total-registered">Total registered: —</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Total Players</div>
+      <div class="value" id="total-players">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Connection Methods</div>
+      <div class="value" id="conn-methods">—</div>
+      <div class="sub" id="conn-breakdown"></div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Blocked IPs</div>
+      <div class="value" id="blocked-ips">—</div>
+      <div class="sub" id="total-violations">Violations: —</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="games">Games</div>
+    <div class="tab" data-tab="security">Security</div>
+    <div class="tab" data-tab="config">Config</div>
+    <div class="tab" data-tab="help">Help</div>
+  </div>
+
+  <!-- Games Tab -->
+  <div id="tab-games" class="tab-content active">
+    <p class="refresh-note">Auto-refreshes every 5 seconds</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Map</th>
+          <th>Players</th>
+          <th>Version</th>
+          <th>Join Code</th>
+          <th>Connection</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody id="games-table">
+        <tr><td colspan="7" class="empty">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Security Tab -->
+  <div id="tab-security" class="tab-content">
+    <h3 style="margin-bottom:12px;font-size:1rem;">IP Blocklist</h3>
+    <div class="input-row">
+      <input type="text" id="block-ip-input" placeholder="IP address or CIDR (e.g., 1.2.3.4 or 10.0.0.0/8)">
+      <button class="btn" onclick="addToBlocklist()">Block IP</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th>IP / CIDR</th><th>Action</th></tr>
+      </thead>
+      <tbody id="blocklist-table">
+        <tr><td colspan="2" class="empty">Loading...</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin:24px 0 12px;font-size:1rem;">Auto-Blocked IPs</h3>
+    <table>
+      <thead>
+        <tr><th>IP</th><th>Violations</th><th>Block Count</th><th>Expires</th><th>Action</th></tr>
+      </thead>
+      <tbody id="autoblock-table">
+        <tr><td colspan="5" class="empty">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Config Tab -->
+  <div id="tab-config" class="tab-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="font-size:1rem;">Server Configuration</h3>
+      <button class="btn" onclick="reloadConfig()">Reload Config</button>
+    </div>
+    <div class="config-grid" id="config-grid">
+      <div class="config-item"><div class="key">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- Help Tab -->
+  <div id="tab-help" class="tab-content">
+    <div class="stat-card" style="margin-bottom:16px;">
+      <h3 style="margin-bottom:12px;">Quick Reference</h3>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:12px;">
+        This dashboard shows real-time status of your NAT Punchthrough server.
+      </p>
+      <h4 style="margin:12px 0 8px;">API Endpoints</h4>
+      <pre style="background:var(--bg);padding:12px;border-radius:8px;font-size:0.8rem;overflow-x:auto;">
+GET  /api/health          — Server health check
+GET  /api/games           — List active games
+POST /api/games           — Register a new game
+GET  /api/games/{id}      — Get game details
+DEL  /api/games/{id}      — Remove a game (Auth: Bearer token)
+POST /api/games/{id}/heartbeat — Keep game alive
+GET  /api/games/{id}/turn — Get TURN credentials
+POST /api/turn-credentials — Get TURN credentials (alt)
+GET  /ws                  — WebSocket signaling
+GET  /ws/signaling        — WebSocket signaling (alt)</pre>
+      <h4 style="margin:12px 0 8px;">Diagnostic Commands</h4>
+      <pre style="background:var(--bg);padding:12px;border-radius:8px;font-size:0.8rem;overflow-x:auto;">
+# Check server health
+curl http://localhost:8080/api/health
+
+# Test STUN connectivity (requires stunclient)
+stunclient your-server-ip
+
+# View logs
+docker compose logs -f server
+docker compose logs -f coturn</pre>
+      <h4 style="margin:12px 0 8px;">Documentation</h4>
+      <p style="color:var(--text-dim);font-size:0.85rem;">
+        Full documentation is available in the <code>docs/</code> folder of the project repository.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // API helper
+  async function api(path, opts = {}) {
+    try {
+      const resp = await fetch(path, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts
+      });
+      return await resp.json();
+    } catch(e) {
+      console.error('API error:', e);
+      return null;
+    }
+  }
+
+  // Refresh stats
+  async function refreshStats() {
+    const data = await api('/admin/api/stats');
+    if (!data) {
+      document.getElementById('status-badge').className = 'status-badge offline';
+      document.getElementById('status-badge').textContent = 'Offline';
+      return;
+    }
+
+    document.getElementById('status-badge').className = 'status-badge online';
+    document.getElementById('status-badge').textContent = 'Online';
+    document.getElementById('uptime').textContent = data.uptime || '—';
+    document.getElementById('active-games').textContent = data.store?.active_games ?? '—';
+    document.getElementById('total-players').textContent = data.store?.total_players ?? '—';
+    document.getElementById('total-registered').textContent = 'Total registered: ' + (data.store?.total_registered ?? '—');
+    document.getElementById('blocked-ips').textContent = data.protection?.currently_blocked ?? '—';
+    document.getElementById('total-violations').textContent = 'Violations: ' + (data.protection?.total_violations ?? '—');
+
+    // Connection methods breakdown
+    const methods = data.store?.conn_methods || {};
+    const total = Object.values(methods).reduce((a,b) => a+b, 0);
+    if (total > 0) {
+      const parts = [];
+      if (methods.direct) parts.push(methods.direct + ' direct');
+      if (methods.punched) parts.push(methods.punched + ' punched');
+      if (methods.relayed) parts.push(methods.relayed + ' relayed');
+      document.getElementById('conn-methods').textContent = total;
+      document.getElementById('conn-breakdown').textContent = parts.join(' | ');
+    } else {
+      document.getElementById('conn-methods').textContent = '0';
+      document.getElementById('conn-breakdown').textContent = '';
+    }
+
+    // Config
+    if (data.config) {
+      const grid = document.getElementById('config-grid');
+      grid.innerHTML = '';
+      for (const [key, val] of Object.entries(data.config)) {
+        grid.innerHTML += `<div class="config-item"><div class="key">${key}</div><div class="val">${val}</div></div>`;
+      }
+    }
+  }
+
+  // Refresh games
+  async function refreshGames() {
+    const data = await api('/api/games');
+    const tbody = document.getElementById('games-table');
+    const games = Array.isArray(data) ? data : (data && data.games ? data.games : []);
+
+    if (games.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No active games</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = games.map(g => `
+      <tr>
+        <td><strong>${esc(g.name)}</strong>${g.private ? ' 🔒' : ''}</td>
+        <td>${esc(g.map || '—')}</td>
+        <td>${g.cur_players}/${g.max_players}</td>
+        <td>${esc(g.game_version || '—')}</td>
+        <td><code>${esc(g.join_code || '—')}</code></td>
+        <td>${connBadge(g.conn_method)}</td>
+        <td>${timeAgo(g.created_at)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Refresh blocklist
+  async function refreshBlocklist() {
+    const data = await api('/admin/api/blocklist');
+    const tbody = document.getElementById('blocklist-table');
+
+    if (!data || !data.blocklist || data.blocklist.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="2" class="empty">Blocklist empty</td></tr>';
+    } else {
+      tbody.innerHTML = data.blocklist.map(ip => `
+        <tr>
+          <td>${esc(ip)}</td>
+          <td><button class="btn danger" onclick="removeFromBlocklist('${esc(ip)}')">Remove</button></td>
+        </tr>
+      `).join('');
+    }
+
+    // Auto-blocked
+    const blocked = await api('/admin/api/blocked');
+    const atbody = document.getElementById('autoblock-table');
+
+    if (!blocked || !blocked.blocked || blocked.blocked.length === 0) {
+      atbody.innerHTML = '<tr><td colspan="5" class="empty">No auto-blocked IPs</td></tr>';
+    } else {
+      atbody.innerHTML = blocked.blocked.map(b => `
+        <tr>
+          <td>${esc(b.ip)}</td>
+          <td>${b.violations}</td>
+          <td>${b.block_count}</td>
+          <td>${new Date(b.blocked_until).toLocaleString()}</td>
+          <td><button class="btn" onclick="unblockIP('${esc(b.ip)}')">Unblock</button></td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  // Actions
+  async function addToBlocklist() {
+    const input = document.getElementById('block-ip-input');
+    const ip = input.value.trim();
+    if (!ip) return;
+
+    await api('/admin/api/blocklist', {
+      method: 'POST',
+      body: JSON.stringify({ ip })
+    });
+    input.value = '';
+    refreshBlocklist();
+  }
+
+  async function removeFromBlocklist(ip) {
+    await api('/admin/api/blocklist/' + encodeURIComponent(ip), { method: 'DELETE' });
+    refreshBlocklist();
+  }
+
+  async function unblockIP(ip) {
+    await api('/admin/api/unblock/' + encodeURIComponent(ip), { method: 'POST' });
+    refreshBlocklist();
+    refreshStats();
+  }
+
+  async function reloadConfig() {
+    const result = await api('/admin/api/reload', { method: 'POST' });
+    if (result?.status === 'reloaded') {
+      alert('Configuration reloaded successfully');
+      refreshStats();
+    } else {
+      alert('Reload failed: ' + (result?.error || 'unknown error'));
+    }
+  }
+
+  // Helpers
+  function esc(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function connBadge(method) {
+    if (!method) return '<span class="badge">unknown</span>';
+    const cls = { direct: 'direct', punched: 'punched', relayed: 'relayed' }[method] || '';
+    return `<span class="badge ${cls}">${method}</span>`;
+  }
+
+  function timeAgo(iso) {
+    if (!iso) return '—';
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60) return Math.floor(diff) + 's ago';
+    if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+    return Math.floor(diff/86400) + 'd ago';
+  }
+
+  // Initial load + auto-refresh
+  refreshStats();
+  refreshGames();
+  refreshBlocklist();
+
+  setInterval(() => {
+    refreshStats();
+    refreshGames();
+  }, 5000);
+
+  setInterval(refreshBlocklist, 15000);
+</script>
+</body>
+</html>

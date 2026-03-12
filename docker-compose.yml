@@ -1,0 +1,85 @@
+# ══════════════════════════════════════════════════════════════
+# NAT Punchthrough Hero — Docker Compose
+# ══════════════════════════════════════════════════════════════
+#
+# Quick start:  docker compose up
+# Production:   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# This runs two services:
+#   1. server  — REST API + WebSocket signaling + admin dashboard
+#   2. coturn  — STUN/TURN server for NAT traversal
+#
+
+services:
+  # ── Master Server ──────────────────────────────────────────
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: natpunch-server
+    ports:
+      - "8080:8080"   # REST API + WebSocket signaling
+      - "80:80"       # Let's Encrypt ACME (only used if domain is set)
+      - "443:443"     # HTTPS (only used if domain is set)
+    volumes:
+      # Config file (optional — works with defaults if absent)
+      - ./config.toml:/app/config.toml:ro
+      # TLS certificate cache (persists Let's Encrypt certs)
+      - certs:/app/certs
+    environment:
+      # These override config.toml values. Set here or in .env file.
+      - EXTERNAL_IP=${EXTERNAL_IP:-auto}
+      - TURN_SECRET=${TURN_SECRET:-}
+      - DOMAIN=${DOMAIN:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - GAME_API_KEY=${GAME_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "/natpunch-server", "health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ── STUN/TURN Server (coturn) ──────────────────────────────
+  coturn:
+    image: coturn/coturn:latest
+    container_name: natpunch-coturn
+    # network_mode: host is recommended for coturn to avoid Docker
+    # NAT issues with UDP relay. This means coturn binds directly
+    # to the host's network interfaces.
+    network_mode: host
+    # Run as non-root for security
+    user: "nobody"
+    command: >-
+      -n
+      --log-file=stdout
+      --external-ip=${EXTERNAL_IP:-auto}
+      --listening-port=3478
+      --use-auth-secret
+      --static-auth-secret=${TURN_SECRET:-changeme}
+      --realm=${DOMAIN:-localhost}
+      --min-port=49152
+      --max-port=50175
+      --no-tcp-relay
+      --no-tls
+      --no-dtls
+      --total-quota=300
+      --user-quota=5
+      --max-bps=256000
+      --stale-nonce=600
+      --no-multicast-peers
+      --denied-peer-ip=0.0.0.0-0.255.255.255
+      --denied-peer-ip=10.0.0.0-10.255.255.255
+      --denied-peer-ip=100.64.0.0-100.127.255.255
+      --denied-peer-ip=127.0.0.0-127.255.255.255
+      --denied-peer-ip=169.254.0.0-169.254.255.255
+      --denied-peer-ip=172.16.0.0-172.31.255.255
+      --denied-peer-ip=192.0.0.0-192.0.0.255
+      --denied-peer-ip=192.168.0.0-192.168.255.255
+      --denied-peer-ip=255.255.255.255-255.255.255.255
+    restart: unless-stopped
+
+volumes:
+  certs:
+    driver: local

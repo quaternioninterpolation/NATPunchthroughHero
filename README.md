@@ -1,0 +1,151 @@
+# NAT Punchthrough Hero
+
+**Let players host game servers without port forwarding.**
+
+A self-hosted NAT traversal platform for Unity/Mirror games. Players behind closed routers can host and join games — no Steam API, no manual port forwarding, no relay service fees.
+
+## How It Works
+
+```
+Player A (Host)          Your Server            Player B (Join)
+  behind NAT          (VPS / Docker)             behind NAT
+      │                     │                        │
+      ├── Register Game ──→ │                        │
+      │                     │ ←── Browse/Join ───────┤
+      │                     │                        │
+      ├── WebSocket ──────→ │ ←── WebSocket ─────────┤
+      │              NAT Punch Coordination          │
+      │                     │                        │
+      ├─────── Direct P2P Connection ────────────────┤
+      │          (or TURN relay fallback)             │
+```
+
+**NAT Traversal Cascade:**
+1. **UPnP** — Automatically open router port (works ~40% of the time)
+2. **STUN Hole Punch** — Coordinate a UDP hole punch via signaling (~80% success)
+3. **TURN Relay** — Fall back to relayed connection (100% success, adds latency)
+
+Combined success rate: **~95%+**
+
+## Quick Start
+
+### Docker (Recommended)
+
+```bash
+git clone https://github.com/you/natpunch.git
+cd natpunch
+docker compose up
+```
+
+Server is running at `http://localhost:8080`. Dashboard at `http://localhost:8080/admin/`.
+
+### Binary
+
+```bash
+cd server
+go build -o natpunch-server .
+./natpunch-server setup    # Interactive setup wizard
+./natpunch-server serve    # Start the server
+```
+
+### VPS One-Liner
+
+```bash
+curl -sSL https://raw.githubusercontent.com/you/natpunch/main/deploy/deploy-vps.sh | sudo bash
+```
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│               Docker Compose                     │
+│                                                  │
+│  ┌─────────────────────┐  ┌──────────────────┐  │
+│  │   Go Server (~10MB) │  │  coturn (STUN/   │  │
+│  │                     │  │   TURN)          │  │
+│  │  • REST API         │  │                  │  │
+│  │  • WebSocket Hub    │  │  • UDP relay     │  │
+│  │  • Admin Dashboard  │  │  • Hole punching │  │
+│  │  • Auto-TLS         │  │  • HMAC auth     │  │
+│  └─────────────────────┘  └──────────────────┘  │
+└─────────────────────────────────────────────────┘
+```
+
+- **2 containers only** — Go server + coturn
+- **~10MB server image** — Multi-stage Docker build from scratch
+- **Zero external dependencies** — No Redis, no nginx, no databases
+- **In-memory store** — Game sessions are ephemeral (~5MB for 500 games)
+- **Auto-TLS** — Built-in Let's Encrypt via Go's autocert
+
+## Unity Integration
+
+```csharp
+// In your NetworkManager
+var transport = gameObject.AddComponent<NATTransport>();
+transport.masterServerUrl = "https://your-server.com";
+transport.apiKey = "your-api-key";
+
+// Host a game
+transport.StartHost();
+
+// Join a game
+transport.JoinCode = "ABC123";
+transport.StartClient();
+```
+
+See [docs/unity-sdk.md](docs/unity-sdk.md) for full integration guide.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Quick Start](docs/quickstart.md) | Get running in 5 minutes |
+| [Deployment](docs/deployment.md) | VPS, cloud, and production setup |
+| [Configuration](docs/configuration.md) | All config options explained |
+| [Security](docs/security.md) | Hardening, TLS, auth |
+| [API Reference](docs/api-reference.md) | REST & WebSocket API |
+| [Architecture](docs/architecture.md) | System design deep dive |
+| [Unity SDK](docs/unity-sdk.md) | Unity/Mirror integration |
+| [Troubleshooting](docs/troubleshooting.md) | Common issues & fixes |
+| [Contributing](docs/contributing.md) | Development guide |
+| [Changelog](docs/changelog.md) | Version history |
+
+## API Overview
+
+```bash
+# Health check
+curl http://localhost:8080/api/health
+
+# List games
+curl http://localhost:8080/api/games
+
+# Register a game
+curl -X POST http://localhost:8080/api/games \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-key" \
+  -d '{"name":"My Game","max_players":4}'
+
+# Get TURN credentials
+curl http://localhost:8080/api/games/{id}/turn
+```
+
+## Security
+
+- API key authentication for game clients
+- HTTP Basic Auth for admin dashboard
+- HMAC-SHA1 TURN credentials (time-limited, per-session)
+- Multi-layer rate limiting (global, per-IP, per-endpoint)
+- IP blocklist/allowlist with CIDR support
+- Automatic abuse detection with escalating blocks
+- coturn locked to TURN relay only (no SSRF via private IPs)
+
+## Requirements
+
+- Docker & Docker Compose (for container deployment)
+- OR Go 1.23+ (for binary deployment)
+- A VPS with a public IP (for production)
+- UDP ports 3478, 49152-50175 open (for TURN)
+
+## License
+
+MIT

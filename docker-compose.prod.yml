@@ -1,0 +1,41 @@
+# ══════════════════════════════════════════════════════════════
+# NAT Punchthrough Hero — Production Overlay
+# ══════════════════════════════════════════════════════════════
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# This overlay adds:
+#   - Restart policies
+#   - Resource limits
+#   - Log rotation
+#   - Read-only root filesystem where safe
+
+services:
+  server:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    # Read-only root with explicit tmpfs for temp files
+    read_only: true
+    tmpfs:
+      - /tmp:size=32M
+
+  coturn:
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
