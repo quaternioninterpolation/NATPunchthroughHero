@@ -155,7 +155,7 @@ log_blocked = true
 max_games = 500
 
 # Seconds without heartbeat before a game is removed.
-game_timeout = 30
+game_timeout = 90
 
 # ── Network ────────────────────────────────────────────────────
 # If behind a reverse proxy (Cloudflare, nginx, traefik), list trusted

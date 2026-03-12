@@ -115,7 +115,7 @@ func DefaultConfig() *Config {
 		TurnCredentialTTL: 3600,
 		DashboardAccess:   "auto",
 		MaxGames:          500,
-		GameTimeout:       30,
+		GameTimeout:       90,
 		RateLimit: RateLimitConfig{
 			Enabled:       true,
 			GlobalRPS:     100,

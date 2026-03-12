@@ -24,8 +24,8 @@ func TestDefaultConfig_Values(t *testing.T) {
 	if cfg.MaxGames != 500 {
 		t.Errorf("MaxGames = %d, want 500", cfg.MaxGames)
 	}
-	if cfg.GameTimeout != 30 {
-		t.Errorf("GameTimeout = %d, want 30", cfg.GameTimeout)
+	if cfg.GameTimeout != 90 {
+		t.Errorf("GameTimeout = %d, want 90", cfg.GameTimeout)
 	}
 	if cfg.TurnCredentialTTL != 3600 {
 		t.Errorf("TurnCredentialTTL = %d, want 3600", cfg.TurnCredentialTTL)

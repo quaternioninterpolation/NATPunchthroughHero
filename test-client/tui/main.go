@@ -366,13 +366,13 @@ func hostGame() {
 	input := prompt("  Start heartbeat loop? (y/n) [y]: ")
 	if input == "" || strings.ToLower(input) == "y" {
 		go heartbeatLoop()
-		printColored(green, "  ✓ Heartbeat started (30s interval)\n")
+		printColored(green, "  ✓ Heartbeat started (15s interval)\n")
 		printColored(dim, "  Game will stay alive until you stop hosting or quit.\n")
 	}
 }
 
 func heartbeatLoop() {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
