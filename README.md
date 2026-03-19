@@ -2,6 +2,8 @@
 
 **Let your players host game servers without port forwarding.**
 
+<img src="https://github.com/user-attachments/assets/b49cbfcf-f7d8-43a7-8315-cd8f8291c60b" width="512" />
+
 A self-hosted NAT traversal platform for Unity/Mirror games. Players behind closed routers can host and join games — no Steam API, no manual port forwarding, no relay service fees (well, maybe some hosting fees).
 
 > **Note:** This project is in early alpha. Expect bugs, breaking changes, and incomplete features. Contributions welcome!
