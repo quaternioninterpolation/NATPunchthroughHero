@@ -1,8 +1,10 @@
 # NAT Punchthrough Hero
 
-**Let players host game servers without port forwarding.**
+**Let your players host game servers without port forwarding.**
 
-A self-hosted NAT traversal platform for Unity/Mirror games. Players behind closed routers can host and join games — no Steam API, no manual port forwarding, no relay service fees.
+A self-hosted NAT traversal platform for Unity/Mirror games. Players behind closed routers can host and join games — no Steam API, no manual port forwarding, no relay service fees (well, maybe some hosting fees).
+
+> **Note:** This project is in early alpha. Expect bugs, breaking changes, and incomplete features. Contributions welcome!
 
 ## How It Works
 
@@ -25,11 +27,12 @@ Player A (Host)          Your Server            Player B (Join)
 2. **STUN Hole Punch** — Coordinate a UDP hole punch via signaling (~80% success)
 3. **TURN Relay** — Fall back to relayed connection (100% success, adds latency)
 
-Combined success rate: **~95%+**
+AI gave this a **~95%+** Combined success rate! Woo!
+No idea how accurate this is but it sounds good in the README.
 
 ## Quick Start
 
-### Docker (Recommended)
+### Starting with Docker (Recommended)
 
 ```bash
 git clone https://github.com/you/natpunch.git
@@ -39,7 +42,7 @@ docker compose up
 
 Server is running at `http://localhost:8080`. Dashboard at `http://localhost:8080/admin/`.
 
-### Binary
+### Starting with Binary
 
 ```bash
 cd server
@@ -50,9 +53,22 @@ go build -o natpunch-server .
 
 ### VPS One-Liner
 
+
 ```bash
-curl -sSL https://raw.githubusercontent.com/you/natpunch/main/deploy/deploy-vps.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/quaternioninterpolation/NATPunchthroughHero/refs/heads/main/deploy/deploy-vps.sh | sudo bash
 ```
+
+### Generate an API Key (optional)
+
+Don't have an API key yet? Generate one here.
+
+```bash
+bash scripts/generate-api-key.sh
+```
+
+Writes to `output/api_key.txt`. Pass it to clients via `X-API-Key` header or `?key=` query param. (see [API Reference](docs/api-reference.md) for details)
+
+If using the Unity SDK, set `transport.apiKey` to this value. (see [Unity Integration](#unity-integration) below)
 
 ## Architecture
 

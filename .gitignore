@@ -31,5 +31,8 @@ coverage.html
 Thumbs.db
 Desktop.ini
 
+# Generated output (API keys, etc.)
+output/
+
 # Docker volumes
 data/
