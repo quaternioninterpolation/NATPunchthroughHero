@@ -1,18 +1,21 @@
 // Package main provides an interactive terminal UI for the NAT Punchthrough Hero test client.
 // It manages server connection state, API keys, and provides a menu-driven interface
-// for all test-client operations.
+// for all test-client operations including a shared chat room with file transfer.
 package main
 
 import (
 	"bufio"
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"hash/crc32"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -37,7 +40,7 @@ const (
 	bgBlue  = "\033[44m"
 )
 
-// ── State ───────────────────────────────────────────────────
+// ── App state ────────────────────────────────────────────────
 
 type AppState struct {
 	ServerURL string
@@ -46,8 +49,8 @@ type AppState struct {
 	JoinCode  string
 	HostToken string
 	GameName  string
-	Connected bool // server reachable
-	Hosting   bool // currently hosting a game
+	Connected bool
+	Hosting   bool
 	WSConn    *websocket.Conn
 	mu        sync.Mutex
 }
@@ -58,13 +61,51 @@ var state = &AppState{
 
 var reader = bufio.NewReader(os.Stdin)
 
+// ── wsConn: thread-safe WebSocket writer ────────────────────
+//
+// gorilla/websocket allows one concurrent reader and one concurrent writer.
+// The chat loop's main goroutine AND the file-send goroutine both write;
+// wsConn serialises writes with a mutex so they never race.
+
+type wsConn struct {
+	conn *websocket.Conn
+	mu   sync.Mutex
+}
+
+func newWSConn(c *websocket.Conn) *wsConn { return &wsConn{conn: c} }
+
+// send marshals msg and writes it as a text frame. Safe for concurrent calls.
+func (w *wsConn) send(msg map[string]interface{}) {
+	data, _ := json.Marshal(msg)
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	// Ignore write errors here; the reader goroutine will detect the closed
+	// connection and trigger the session shutdown via doneCh.
+	w.conn.WriteMessage(websocket.TextMessage, data) //nolint:errcheck
+}
+
+// sendClose sends a WebSocket close frame.
+func (w *wsConn) sendClose() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.conn.WriteMessage(websocket.CloseMessage, //nolint:errcheck
+		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+}
+
+// close closes the underlying TCP connection.
+func (w *wsConn) close() { w.conn.Close() }
+
+// read reads the next message. Only one goroutine should call this at a time.
+func (w *wsConn) read() ([]byte, error) {
+	_, data, err := w.conn.ReadMessage()
+	return data, err
+}
+
 // ── Main ────────────────────────────────────────────────────
 
 func main() {
 	clearScreen()
 	printBanner()
-
-	// Try to connect on startup
 	checkHealth()
 
 	for {
@@ -140,7 +181,7 @@ func printMenu() {
 	fmt.Println(bold + "  Play" + reset)
 	fmt.Println("    " + cyan + "4" + reset + "  Host a game")
 	fmt.Println("    " + cyan + "5" + reset + "  Join a game")
-	fmt.Println("    " + cyan + "6" + reset + "  NAT punch test (WebSocket)")
+	fmt.Println("    " + cyan + "6" + reset + "  NAT punch + chat session")
 	fmt.Println()
 	fmt.Println(bold + "  Other" + reset)
 	fmt.Println("    " + cyan + "7" + reset + "  Show current state")
@@ -156,7 +197,6 @@ func configureServer() {
 	fmt.Printf("  Current server: %s\n", state.ServerURL)
 	input := prompt("  New server URL (enter to keep): ")
 	if input != "" {
-		// Basic validation
 		if !strings.HasPrefix(input, "http://") && !strings.HasPrefix(input, "https://") {
 			input = "http://" + input
 		}
@@ -294,8 +334,7 @@ func hostGame() {
 
 	if state.Hosting {
 		printColored(yellow, fmt.Sprintf("  Already hosting: %s (code: %s)\n", state.GameName, state.JoinCode))
-		input := prompt("  Stop hosting first? (y/n): ")
-		if strings.ToLower(input) == "y" {
+		if strings.ToLower(prompt("  Stop hosting first? (y/n): ")) == "y" {
 			stopHosting()
 		} else {
 			return
@@ -355,14 +394,12 @@ func hostGame() {
 	state.mu.Unlock()
 
 	fmt.Println()
-	printColored(green, "  ✓ Game registered!\n")
-	fmt.Println()
+	printColored(green, "  ✓ Game registered!\n\n")
 	fmt.Printf("    "+dim+"ID:"+reset+"         %s\n", hostResp.ID)
 	fmt.Printf("    "+dim+"Join Code:"+reset+"   %s%s%s\n", yellow+bold, hostResp.JoinCode, reset)
 	fmt.Printf("    "+dim+"Host Token:"+reset+"  %s...%s\n", hostResp.HostToken[:8], hostResp.HostToken[len(hostResp.HostToken)-4:])
 	fmt.Println()
 
-	// Start heartbeat in background
 	input := prompt("  Start heartbeat loop? (y/n) [y]: ")
 	if input == "" || strings.ToLower(input) == "y" {
 		go heartbeatLoop()
@@ -441,7 +478,6 @@ func joinGame() {
 
 	var gameID string
 
-	// If it looks like a join code (short, uppercase), look it up
 	if len(code) <= 8 {
 		req, _ := http.NewRequest("GET", state.ServerURL+"/api/games?code="+url.QueryEscape(strings.ToUpper(code)), nil)
 		setAuthHeaders(req)
@@ -467,7 +503,6 @@ func joinGame() {
 		gameID = code
 	}
 
-	// Get TURN credentials
 	fmt.Println()
 	printColored(dim, "  Fetching TURN credentials...\n")
 
@@ -490,8 +525,7 @@ func joinGame() {
 	var turnCreds map[string]interface{}
 	json.Unmarshal(turnBody, &turnCreds)
 
-	printColored(green, "  ✓ TURN credentials received:\n")
-	fmt.Println()
+	printColored(green, "  ✓ TURN credentials received:\n\n")
 	if uris, ok := turnCreds["uris"].([]interface{}); ok {
 		for _, u := range uris {
 			fmt.Printf("    "+dim+"URI:"+reset+"      %s\n", u)
@@ -506,10 +540,10 @@ func joinGame() {
 	fmt.Println()
 }
 
-// ── 6. NAT Punch Test ──────────────────────────────────────
+// ── 6. NAT Punch + Chat Session ────────────────────────────
 
 func punchTest() {
-	printHeader("NAT Punch Test (WebSocket)")
+	printHeader("NAT Punch + Chat Session")
 
 	if !ensureConnected() {
 		return
@@ -520,9 +554,7 @@ func punchTest() {
 	fmt.Println("    " + cyan + "0" + reset + "  Back")
 	fmt.Println()
 
-	choice := prompt("  ▸ ")
-
-	switch choice {
+	switch prompt("  ▸ ") {
 	case "1":
 		punchAsHost()
 	case "2":
@@ -535,10 +567,9 @@ func punchTest() {
 }
 
 func punchAsHost() {
-	// Register game first
 	payload := map[string]interface{}{
 		"name":            "Punch Test",
-		"max_players":     2,
+		"max_players":     8,
 		"current_players": 1,
 		"nat_type":        "unknown",
 	}
@@ -568,78 +599,722 @@ func punchAsHost() {
 	json.Unmarshal(respBody, &hostResp)
 
 	printColored(green, fmt.Sprintf("  ✓ Game registered: %s\n", hostResp.ID))
-	fmt.Printf("    "+dim+"Join Code:"+reset+" %s%s%s\n", yellow+bold, hostResp.JoinCode, reset)
-	fmt.Println()
+	fmt.Printf("    "+dim+"Join Code:"+reset+" %s%s%s\n\n", yellow+bold, hostResp.JoinCode, reset)
 
-	// Connect WebSocket
-	conn := connectWebSocket()
-	if conn == nil {
+	ws := connectWebSocket()
+	if ws == nil {
 		return
 	}
-	defer conn.Close()
 
-	// Register as host
-	sendWSMsg(conn, map[string]interface{}{
-		"type":       "register_host",
-		"game_id":    hostResp.ID,
-		"host_token": hostResp.HostToken,
+	ws.send(map[string]interface{}{
+		"type": "register_host",
+		"payload": map[string]interface{}{
+			"game_id":    hostResp.ID,
+			"host_token": hostResp.HostToken,
+		},
 	})
 
-	printColored(green, "  ✓ Registered as host on WebSocket\n")
-	fmt.Println()
-	printColored(yellow, fmt.Sprintf("  Share this join code: %s\n", hostResp.JoinCode))
-	printColored(dim, "  Waiting for joiners... Press Enter to disconnect.\n")
-	fmt.Println()
+	printColored(yellow, fmt.Sprintf("  Share this join code: %s%s%s\n", yellow+bold, hostResp.JoinCode, reset))
+	printColored(dim, "  Waiting for players to join...\n\n")
 
-	// Read messages in background
-	done := make(chan struct{})
-	go readWSMessages(conn, done)
-
-	// Wait for Enter
-	reader.ReadString('\n')
-	fmt.Println()
-	printColored(dim, "  Disconnecting...\n")
-	conn.WriteMessage(websocket.CloseMessage,
-		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-	close(done)
-	time.Sleep(300 * time.Millisecond)
+	runChatSession(ws, hostResp.ID, "host")
 }
 
 func punchAsJoiner() {
-	gameID := prompt("  Game ID: ")
-	if gameID == "" {
-		printColored(red, "  ✗ No game ID provided\n")
+	input := prompt("  Join code or game ID: ")
+	if input == "" {
+		printColored(red, "  ✗ No code provided\n")
 		return
 	}
 
-	conn := connectWebSocket()
-	if conn == nil {
+	var gameID string
+
+	if len(input) <= 8 {
+		req, _ := http.NewRequest("GET", state.ServerURL+"/api/games?code="+url.QueryEscape(strings.ToUpper(input)), nil)
+		setAuthHeaders(req)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			printColored(red, fmt.Sprintf("  ✗ Lookup failed: %v\n", err))
+			return
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		var games []map[string]interface{}
+		json.Unmarshal(body, &games)
+		if len(games) == 0 {
+			printColored(red, fmt.Sprintf("  ✗ No game found with code %s\n", input))
+			return
+		}
+		gameID = games[0]["id"].(string)
+		gameName, _ := games[0]["name"].(string)
+		printColored(green, fmt.Sprintf("  ✓ Found: %s (%s)\n", gameName, gameID))
+	} else {
+		gameID = input
+	}
+
+	ws := connectWebSocket()
+	if ws == nil {
 		return
 	}
-	defer conn.Close()
 
-	sendWSMsg(conn, map[string]interface{}{
-		"type":    "request_join",
-		"game_id": gameID,
+	ws.send(map[string]interface{}{
+		"type": "request_join",
+		"payload": map[string]interface{}{
+			"game_id": gameID,
+		},
 	})
 
-	printColored(green, "  ✓ Join request sent\n")
-	printColored(dim, "  Waiting for signaling... Press Enter to disconnect.\n")
-	fmt.Println()
-
-	done := make(chan struct{})
-	go readWSMessages(conn, done)
-
-	reader.ReadString('\n')
-	fmt.Println()
-	printColored(dim, "  Disconnecting...\n")
-	conn.WriteMessage(websocket.CloseMessage,
-		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-	close(done)
-	time.Sleep(300 * time.Millisecond)
+	printColored(dim, "  Join request sent — waiting for signaling...\n\n")
+	runChatSession(ws, gameID, "joiner")
 }
 
-func connectWebSocket() *websocket.Conn {
+// ── Chat Session ─────────────────────────────────────────────
+
+// wsMsg is a decoded incoming WebSocket message.
+type wsMsg struct {
+	Type    string
+	Payload map[string]interface{}
+}
+
+// fileTransferSend tracks an outgoing file offer waiting for acceptance.
+type fileTransferSend struct {
+	id       string
+	filePath string
+}
+
+// fileTransferRecv tracks an incoming file being assembled from chunks.
+type fileTransferRecv struct {
+	id       string
+	filename string
+	saveDir  string
+	size     int64
+	crc32Hex string
+	chunks   map[int][]byte
+	lastIdx  int // -1 until is_last chunk arrives
+}
+
+// chunkSize is the raw bytes per file transfer chunk (32 KB → ~43 KB base64).
+// Combined with the 20 ms inter-chunk sleep this gives ~1.6 MB/s throughput —
+// well within the server's 128 KB MaxWSMessage limit.
+const chunkSize = 32 * 1024
+
+// runChatSession is the unified handler for the signaling phase and the
+// subsequent chat + file-transfer phase.  role is "host" or "joiner".
+func runChatSession(ws *wsConn, gameID, role string) {
+	defer ws.close()
+
+	wsMsgCh := make(chan wsMsg, 32)
+	inputCh := make(chan string, 4)
+	inputDone := make(chan struct{})
+
+	var doneOnce sync.Once
+	doneCh := make(chan struct{})
+	closeDone := func() { doneOnce.Do(func() { close(doneCh) }) }
+
+	// Goroutine: read incoming WebSocket messages.
+	go func() {
+		defer closeDone()
+		for {
+			raw, err := ws.read()
+			if err != nil {
+				return
+			}
+			var parsed map[string]interface{}
+			json.Unmarshal(raw, &parsed)
+			msgType, _ := parsed["type"].(string)
+			payload, _ := parsed["payload"].(map[string]interface{})
+			if payload == nil {
+				payload = parsed // flat message format fallback
+			}
+			select {
+			case wsMsgCh <- wsMsg{Type: msgType, Payload: payload}:
+			case <-doneCh:
+				return
+			}
+		}
+	}()
+
+	// Goroutine: read stdin line by line.
+	// Uses the shared global reader so there is no competing buffer when the
+	// user returns to the menu after this session ends.
+	go func() {
+		defer close(inputDone)
+		for {
+			line, err := reader.ReadString('\n')
+			line = strings.TrimSpace(line)
+			if err != nil {
+				closeDone()
+				return
+			}
+			// Prefer doneCh to avoid the goroutine lingering after session end.
+			select {
+			case <-doneCh:
+				return
+			default:
+			}
+			select {
+			case inputCh <- line:
+			case <-doneCh:
+				return
+			}
+		}
+	}()
+
+	// Signaling state
+	natConfirmed := false
+	inChat := false
+	var sessionID string
+
+	// File transfer state — only accessed from the main loop (no locking needed)
+	pendingSends := make(map[string]*fileTransferSend)
+	activeRecv := make(map[string]*fileTransferRecv)
+
+	if role == "host" {
+		printColored(dim, "  Waiting for the server to confirm registration...\n")
+	}
+
+mainLoop:
+	for {
+		select {
+		case <-doneCh:
+			printColored(red, "\n  Connection closed.\n")
+			break mainLoop
+
+		case msg := <-wsMsgCh:
+			handleSessionMsg(ws, msg, gameID, role,
+				&natConfirmed, &inChat, &sessionID,
+				pendingSends, activeRecv)
+
+		case line := <-inputCh:
+			if !inChat {
+				continue // signaling still in progress — ignore input
+			}
+			if !handleChatInput(ws, line, gameID, pendingSends, activeRecv) {
+				break mainLoop
+			}
+		}
+	}
+
+	// Shutdown: close channel, send WS close frame, then wait for the stdin
+	// goroutine to exit before returning (so the shared reader is free again).
+	closeDone()
+	ws.sendClose()
+	fmt.Println()
+	printColored(dim, "  Chat ended. Press Enter to return to menu...\n")
+	<-inputDone
+}
+
+// handleSessionMsg dispatches a single incoming WebSocket message.
+func handleSessionMsg(
+	ws *wsConn,
+	msg wsMsg,
+	gameID, role string,
+	natConfirmed *bool,
+	inChat *bool,
+	sessionID *string,
+	pendingSends map[string]*fileTransferSend,
+	activeRecv map[string]*fileTransferRecv,
+) {
+	switch msg.Type {
+
+	// ── NAT Signaling ─────────────────────────────────────
+
+	case "host_registered":
+		printColored(green, "  ✓ Registered as host\n")
+		// The host is a participant too — enter chat immediately so they can
+		// send and receive messages as soon as joiners connect.
+		*inChat = true
+		printChatWelcome()
+
+	case "gather_candidates":
+		sid, _ := msg.Payload["session_id"].(string)
+		*sessionID = sid
+		printColored(dim, fmt.Sprintf("  [signaling] gathering ICE candidates (session %s)...\n", sid))
+		// Send a simulated ICE candidate to drive the server's punch/TURN flow.
+		ws.send(map[string]interface{}{
+			"type": "ice_candidate",
+			"payload": map[string]interface{}{
+				"session_id":  sid,
+				"public_ip":   "127.0.0.1",
+				"public_port": 12345,
+				"local_ip":    "127.0.0.1",
+				"local_port":  12345,
+				"nat_type":    "unknown",
+			},
+		})
+
+	case "peer_candidate":
+		ip, _ := msg.Payload["public_ip"].(string)
+		port := msg.Payload["public_port"]
+		printColored(dim, fmt.Sprintf("  [signaling] peer candidate: %s:%v\n", ip, port))
+
+	case "punch_signal":
+		// Joiner receives this after the host submits its ICE candidate.
+		// Declare a successful hole-punch and enter chat.
+		if !*natConfirmed && role == "joiner" && *sessionID != "" {
+			*natConfirmed = true
+			ws.send(map[string]interface{}{
+				"type": "connection_established",
+				"payload": map[string]interface{}{
+					"session_id": *sessionID,
+					"method":     "punched",
+				},
+			})
+			printNATConfirmation("punched")
+			*inChat = true
+			printChatWelcome()
+		}
+
+	case "turn_fallback":
+		// Joiner receives this alongside (or instead of) punch_signal.
+		// If we haven't confirmed yet, fall back to the relay method.
+		if !*natConfirmed && role == "joiner" && *sessionID != "" {
+			*natConfirmed = true
+			ws.send(map[string]interface{}{
+				"type": "connection_established",
+				"payload": map[string]interface{}{
+					"session_id": *sessionID,
+					"method":     "relayed",
+				},
+			})
+			printNATConfirmation("relayed")
+			*inChat = true
+			printChatWelcome()
+		}
+
+	case "peer_connected":
+		// Host receives this when a joiner sends connection_established.
+		method, _ := msg.Payload["method"].(string)
+		if method == "" {
+			method = "punched"
+		}
+		// Show NAT method once, then always announce the new player.
+		if !*natConfirmed {
+			*natConfirmed = true
+			printNATConfirmation(method)
+		}
+		fmt.Printf("\r  "+green+"✓ New player joined via %s"+reset+"\n", method)
+		fmt.Print("  You > ")
+
+	// ── Chat ──────────────────────────────────────────────
+
+	case "chat_message":
+		from, _ := msg.Payload["from"].(string)
+		text, _ := msg.Payload["text"].(string)
+		ts, _ := msg.Payload["ts"].(string)
+		if len(ts) >= 16 {
+			ts = ts[11:16] // extract HH:MM from RFC3339 timestamp
+		} else {
+			ts = time.Now().Format("15:04")
+		}
+		displayName := "Peer"
+		if len(from) >= 4 {
+			displayName = "Peer-" + from[:4]
+		}
+		// \r clears any partially typed "You > " line before printing
+		fmt.Printf("\r  "+cyan+bold+"[%s] %s:"+reset+" %s\n", ts, displayName, text)
+		fmt.Print("  You > ")
+
+	// ── File Transfer ─────────────────────────────────────
+
+	case "file_offer":
+		from, _ := msg.Payload["from"].(string)
+		tid, _ := msg.Payload["transfer_id"].(string)
+		fname, _ := msg.Payload["filename"].(string)
+		size, _ := msg.Payload["size"].(float64)
+		crc32hex, _ := msg.Payload["crc32"].(string)
+
+		// Sanitise filename — strip any path components the sender may have included
+		fname = filepath.Base(fname)
+		if fname == "." || fname == "/" {
+			fname = "received_file"
+		}
+
+		senderName := "Peer"
+		if len(from) >= 4 {
+			senderName = "Peer-" + from[:4]
+		}
+
+		fmt.Printf("\n  "+magenta+bold+"📁 File offer"+reset+" from %s\n", senderName)
+		fmt.Printf("     Name: %s  Size: %s\n", fname, formatBytes(int64(size)))
+		fmt.Printf("     CRC32: %s\n", crc32hex)
+		fmt.Printf("     ID: %s\n", tid)
+		fmt.Printf("     "+dim+"→ /accept %s [dir]  or  /decline %s"+reset+"\n", tid, tid)
+		fmt.Print("  You > ")
+
+		activeRecv[tid] = &fileTransferRecv{
+			id:       tid,
+			filename: fname,
+			saveDir:  ".",
+			size:     int64(size),
+			crc32Hex: crc32hex,
+			chunks:   make(map[int][]byte),
+			lastIdx:  -1,
+		}
+
+	case "file_accept":
+		tid, _ := msg.Payload["transfer_id"].(string)
+		if send, ok := pendingSends[tid]; ok {
+			delete(pendingSends, tid)
+			fmt.Printf("\n  "+green+"✓ File accepted — sending..."+reset+"\n")
+			go startFileSend(ws, send.filePath, tid)
+		}
+
+	case "file_reject":
+		tid, _ := msg.Payload["transfer_id"].(string)
+		delete(pendingSends, tid)
+		fmt.Printf("\n  "+yellow+"✗ File declined (id: %s)"+reset+"\n", tid)
+		fmt.Print("  You > ")
+
+	case "file_chunk":
+		tid, _ := msg.Payload["transfer_id"].(string)
+		idx, _ := msg.Payload["index"].(float64)
+		data, _ := msg.Payload["data"].(string)
+		isLast, _ := msg.Payload["is_last"].(bool)
+		crc32hex, _ := msg.Payload["crc32"].(string)
+
+		recv, ok := activeRecv[tid]
+		if !ok {
+			return
+		}
+
+		raw, err := base64.StdEncoding.DecodeString(data)
+		if err == nil {
+			recv.chunks[int(idx)] = raw
+		}
+
+		if isLast {
+			if crc32hex != "" {
+				recv.crc32Hex = crc32hex // server attaches CRC32 on last chunk
+			}
+			recv.lastIdx = int(idx)
+			delete(activeRecv, tid) // remove before handing off to goroutine
+			go func(r *fileTransferRecv) {
+				if err := assembleFile(r); err != nil {
+					fmt.Printf("\n  "+red+"✗ File receive failed: %v"+reset+"\n", err)
+				}
+				fmt.Print("  You > ")
+			}(recv)
+		}
+
+	// ── Misc ──────────────────────────────────────────────
+
+	case "peer_disconnected":
+		sid, _ := msg.Payload["session_id"].(string)
+		fmt.Printf("\n  "+yellow+"⚠ Peer disconnected (session %s)"+reset+"\n", sid)
+		if *inChat {
+			fmt.Print("  You > ")
+		}
+
+	case "error":
+		// Server errors arrive as {"type":"error","error":"code: msg"}.
+		// After the flat-message fallback, msg.Payload IS the full message.
+		errMsg, _ := msg.Payload["error"].(string)
+		if errMsg == "" {
+			errMsg = fmt.Sprintf("%v", msg.Payload)
+		}
+		fmt.Printf("\n  "+red+"[error] %s"+reset+"\n", errMsg)
+		if *inChat {
+			fmt.Print("  You > ")
+		}
+
+	case "pong":
+		// keep-alive response, ignore
+
+	default:
+		if msg.Type != "" {
+			printColored(dim, fmt.Sprintf("  [%s]\n", msg.Type))
+		}
+	}
+}
+
+// handleChatInput processes one line of user input.
+// Returns false when the user wants to quit the session.
+func handleChatInput(
+	ws *wsConn,
+	line, gameID string,
+	pendingSends map[string]*fileTransferSend,
+	activeRecv map[string]*fileTransferRecv,
+) bool {
+	if line == "" {
+		fmt.Print("  You > ")
+		return true
+	}
+
+	switch {
+	case line == "/quit" || line == "/q":
+		return false
+
+	case line == "/help":
+		fmt.Println()
+		fmt.Println("  " + bold + "Chat Commands:" + reset)
+		fmt.Println("    /file <path>              Send a file to everyone in the room")
+		fmt.Println("    /accept <id> [dir]        Accept an incoming file offer")
+		fmt.Println("    /decline <id>             Decline an incoming file offer")
+		fmt.Println("    /quit                     Leave the chat session")
+		fmt.Println()
+		fmt.Print("  You > ")
+
+	case strings.HasPrefix(line, "/file"):
+		parts := strings.Fields(strings.TrimPrefix(line, "/file"))
+		if len(parts) == 0 {
+			printColored(red, "  Usage: /file <path>\n")
+			fmt.Print("  You > ")
+			return true
+		}
+		filePath := strings.Join(parts, " ") // rejoin to support spaces in paths
+		tid, err := sendFileOffer(ws, gameID, filePath)
+		if err != nil {
+			printColored(red, fmt.Sprintf("  ✗ %v\n", err))
+		} else {
+			pendingSends[tid] = &fileTransferSend{id: tid, filePath: filePath}
+			printColored(green, fmt.Sprintf("  ✓ File offer sent (id: %s)\n", tid))
+		}
+		fmt.Print("  You > ")
+
+	case strings.HasPrefix(line, "/accept"):
+		parts := strings.Fields(strings.TrimPrefix(line, "/accept"))
+		if len(parts) == 0 {
+			printColored(red, "  Usage: /accept <transfer_id> [save_dir]\n")
+			fmt.Print("  You > ")
+			return true
+		}
+		tid := parts[0]
+		saveDir := "."
+		if len(parts) > 1 {
+			saveDir = parts[1]
+		}
+		recv, ok := activeRecv[tid]
+		if !ok {
+			printColored(red, "  ✗ Unknown transfer ID\n")
+			fmt.Print("  You > ")
+			return true
+		}
+		recv.saveDir = saveDir
+		ws.send(map[string]interface{}{
+			"type":    "file_accept",
+			"payload": map[string]string{"transfer_id": tid},
+		})
+		printColored(green, fmt.Sprintf("  ✓ Accepted — saving to: %s\n", saveDir))
+		fmt.Print("  You > ")
+
+	case strings.HasPrefix(line, "/decline"):
+		parts := strings.Fields(strings.TrimPrefix(line, "/decline"))
+		if len(parts) == 0 {
+			printColored(red, "  Usage: /decline <transfer_id>\n")
+			fmt.Print("  You > ")
+			return true
+		}
+		tid := parts[0]
+		delete(activeRecv, tid)
+		ws.send(map[string]interface{}{
+			"type":    "file_reject",
+			"payload": map[string]string{"transfer_id": tid},
+		})
+		printColored(yellow, "  ✓ Declined\n")
+		fmt.Print("  You > ")
+
+	default:
+		ws.send(map[string]interface{}{
+			"type": "chat_message",
+			"payload": map[string]interface{}{
+				"game_id": gameID,
+				"text":    line,
+			},
+		})
+		ts := time.Now().Format("15:04")
+		fmt.Printf("  "+bold+"[%s] You:"+reset+" %s\n", ts, line)
+		fmt.Print("  You > ")
+	}
+
+	return true
+}
+
+// ── NAT Confirmation UI ──────────────────────────────────────
+
+func printNATConfirmation(method string) {
+	fmt.Println()
+	fmt.Println(dim + "  ─────────────────────────────────────────────────" + reset)
+	switch method {
+	case "punched":
+		fmt.Println("  " + green + bold + "🔓 NAT Traversal Confirmed — UDP Hole Punch" + reset)
+		fmt.Println("  " + dim + "Direct P2P path established via simultaneous UDP." + reset)
+	case "direct":
+		fmt.Println("  " + cyan + bold + "⚡ NAT Traversal Confirmed — Direct" + reset)
+		fmt.Println("  " + dim + "Direct connection (no NAT traversal required)." + reset)
+	case "relayed":
+		fmt.Println("  " + yellow + bold + "🔄 NAT Traversal Confirmed — TURN Relay" + reset)
+		fmt.Println("  " + dim + "Hole punch failed or skipped; traffic relayed via TURN." + reset)
+	default:
+		fmt.Printf("  "+green+bold+"✓ NAT Traversal Confirmed — %s"+reset+"\n", method)
+	}
+	fmt.Println(dim + "  ─────────────────────────────────────────────────" + reset)
+	fmt.Println()
+}
+
+func printChatWelcome() {
+	fmt.Println("  " + bold + "Chat Room" + reset + dim + " — all peers share this room" + reset)
+	fmt.Println(dim + "  Commands: /file <path>  /accept <id> [dir]  /decline <id>  /quit  /help" + reset)
+	fmt.Println(dim + "  ─────────────────────────────────────────────────" + reset)
+	fmt.Println()
+	fmt.Print("  You > ")
+}
+
+// ── File Transfer ────────────────────────────────────────────
+
+// sendFileOffer opens the file, computes its CRC32, and broadcasts a file_offer.
+func sendFileOffer(ws *wsConn, gameID, filePath string) (string, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("cannot open file: %w", err)
+	}
+	defer f.Close()
+
+	info, err := f.Stat()
+	if err != nil {
+		return "", fmt.Errorf("cannot stat file: %w", err)
+	}
+
+	h := crc32.NewIEEE()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", fmt.Errorf("CRC32 computation failed: %w", err)
+	}
+	crc32Hex := fmt.Sprintf("%08x", h.Sum32())
+
+	// Nanosecond timestamp gives a unique-enough transfer ID for demo use.
+	transferID := fmt.Sprintf("%x", time.Now().UnixNano())
+
+	ws.send(map[string]interface{}{
+		"type": "file_offer",
+		"payload": map[string]interface{}{
+			"game_id":     gameID,
+			"transfer_id": transferID,
+			"filename":    filepath.Base(filePath),
+			"size":        info.Size(),
+			"crc32":       crc32Hex,
+		},
+	})
+
+	return transferID, nil
+}
+
+// startFileSend reads the file and streams it in base64-encoded chunks.
+// Runs in a goroutine; uses the thread-safe wsConn for concurrent writes.
+func startFileSend(ws *wsConn, filePath, transferID string) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		fmt.Printf("\n  "+red+"✗ File send failed: %v"+reset+"\n", err)
+		fmt.Print("  You > ")
+		return
+	}
+	defer f.Close()
+
+	buf := make([]byte, chunkSize)
+	index := 0
+
+	for {
+		n, err := f.Read(buf)
+		if err != nil && err != io.EOF {
+			fmt.Printf("\n  "+red+"✗ File read error: %v"+reset+"\n", err)
+			fmt.Print("  You > ")
+			return
+		}
+
+		isLast := err == io.EOF
+
+		if n > 0 || (isLast && index == 0) {
+			// Send the chunk; for an empty file this sends one zero-length chunk
+			// so the receiver's assembly goroutine is triggered correctly.
+			encoded := base64.StdEncoding.EncodeToString(buf[:n])
+			ws.send(map[string]interface{}{
+				"type": "file_chunk",
+				"payload": map[string]interface{}{
+					"transfer_id": transferID,
+					"index":       index,
+					"data":        encoded,
+					"is_last":     isLast,
+				},
+			})
+			index++
+		}
+
+		if isLast {
+			break
+		}
+
+		// Throttle to ~1.6 MB/s, keeping the server's sendCh comfortably below capacity.
+		time.Sleep(20 * time.Millisecond)
+	}
+
+	fmt.Printf("\n  "+green+"✓ File sent (%d chunk(s))"+reset+"\n", index)
+	fmt.Print("  You > ")
+}
+
+// assembleFile reassembles received chunks, verifies the CRC32, and writes
+// the file to disk.  Runs in a goroutine.
+func assembleFile(recv *fileTransferRecv) error {
+	if recv.lastIdx < 0 {
+		return fmt.Errorf("incomplete transfer: last chunk never arrived")
+	}
+
+	// Assemble in chunk-index order
+	var data []byte
+	for i := 0; i <= recv.lastIdx; i++ {
+		chunk, ok := recv.chunks[i]
+		if !ok {
+			return fmt.Errorf("incomplete transfer: missing chunk %d/%d", i, recv.lastIdx)
+		}
+		data = append(data, chunk...)
+	}
+
+	// Verify integrity
+	actual := crc32.ChecksumIEEE(data)
+	actualHex := fmt.Sprintf("%08x", actual)
+	crcStatus := "CRC32 OK"
+	if recv.crc32Hex != "" {
+		if actualHex != recv.crc32Hex {
+			return fmt.Errorf("CRC32 mismatch: expected %s got %s — file is corrupt",
+				recv.crc32Hex, actualHex)
+		}
+	} else {
+		crcStatus = "CRC32 not verified (sender did not provide hash)"
+	}
+
+	saveDir := recv.saveDir
+	if saveDir == "" {
+		saveDir = "."
+	}
+	if err := os.MkdirAll(saveDir, 0755); err != nil {
+		return fmt.Errorf("cannot create save directory: %w", err)
+	}
+
+	savePath := filepath.Join(saveDir, recv.filename)
+	if err := os.WriteFile(savePath, data, 0644); err != nil {
+		return fmt.Errorf("cannot write file: %w", err)
+	}
+
+	fmt.Printf("\n  "+green+bold+"✓ File saved: %s"+reset+" (%s, %s)\n",
+		savePath, formatBytes(int64(len(data))), crcStatus)
+	return nil
+}
+
+// formatBytes formats a byte count as a human-readable string.
+func formatBytes(n int64) string {
+	switch {
+	case n >= 1024*1024*1024:
+		return fmt.Sprintf("%.1f GB", float64(n)/(1024*1024*1024))
+	case n >= 1024*1024:
+		return fmt.Sprintf("%.1f MB", float64(n)/(1024*1024))
+	case n >= 1024:
+		return fmt.Sprintf("%.1f KB", float64(n)/1024)
+	default:
+		return fmt.Sprintf("%d B", n)
+	}
+}
+
+// ── WebSocket helpers ─────────────────────────────────────────
+
+func connectWebSocket() *wsConn {
 	wsURL := strings.Replace(state.ServerURL, "http://", "ws://", 1)
 	wsURL = strings.Replace(wsURL, "https://", "wss://", 1)
 	wsURL += "/ws/signaling"
@@ -658,62 +1333,7 @@ func connectWebSocket() *websocket.Conn {
 	}
 
 	printColored(green, "  ✓ WebSocket connected\n")
-	return conn
-}
-
-func readWSMessages(conn *websocket.Conn, done chan struct{}) {
-	// Set up a close handler so that when done is closed we unblock ReadMessage.
-	go func() {
-		<-done
-		conn.Close()
-	}()
-
-	for {
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			// Normal shutdown or connection closed — exit silently.
-			return
-		}
-
-		var parsed map[string]interface{}
-		json.Unmarshal(msg, &parsed)
-		msgType, _ := parsed["type"].(string)
-
-		// Server wraps data in "payload" — extract it
-		payload, _ := parsed["payload"].(map[string]interface{})
-		if payload == nil {
-			payload = parsed // fallback: flat message format
-		}
-
-		switch msgType {
-		case "host_registered":
-			printColored(green, fmt.Sprintf("    ← host_registered (game: %s)\n", payload["game_id"]))
-		case "gather_candidates":
-			printColored(cyan, fmt.Sprintf("    ← gather_candidates (session: %s)\n", payload["session_id"]))
-		case "peer_candidate":
-			printColored(cyan, fmt.Sprintf("    ← peer_candidate: %s:%v\n", payload["public_ip"], payload["public_port"]))
-		case "punch_signal":
-			printColored(magenta, fmt.Sprintf("    ← punch_signal from %s\n", payload["from_peer"]))
-		case "turn_fallback":
-			printColored(yellow, "    ← turn_fallback (TURN relay credentials)\n")
-		case "error":
-			errMsg := parsed["error"]
-			if errMsg == nil {
-				errMsg = payload["message"]
-			}
-			printColored(red, fmt.Sprintf("    ← error: %s\n", errMsg))
-		default:
-			pretty, _ := json.MarshalIndent(parsed, "      ", "  ")
-			fmt.Printf("    "+dim+"← %s:"+reset+" %s\n", msgType, pretty)
-		}
-	}
-}
-
-func sendWSMsg(conn *websocket.Conn, msg map[string]interface{}) {
-	data, _ := json.Marshal(msg)
-	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
-		printColored(red, fmt.Sprintf("  ✗ Send error: %v\n", err))
-	}
+	return newWSConn(conn)
 }
 
 // ── 7. Show State ───────────────────────────────────────────
@@ -800,7 +1420,6 @@ func cleanup() {
 }
 
 func init() {
-	// Handle Ctrl+C gracefully
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	go func() {

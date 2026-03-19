@@ -142,7 +142,7 @@ func DefaultConfig() *Config {
 			SlowRequestTimeout:  "10s",
 			SlowRequestMax:      5,
 			MaxRequestBody:      16384,  // 16KB
-			MaxWSMessage:        4096,   // 4KB
+			MaxWSMessage:        131072, // 128KB (increased to support chat and file transfer chunks)
 			LogBlocked:          true,
 		},
 	}

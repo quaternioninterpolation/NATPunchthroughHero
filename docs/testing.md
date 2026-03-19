@@ -55,9 +55,109 @@ The server has 9 test files covering all major subsystems:
 | `signaling_test.go` | 15 | WebSocket signaling, host/join flow, ICE relay |
 | `turn_test.go` | 7 | TURN credential generation, HMAC validation |
 
-## Test Client
+## TUI Test Client
 
-The `test-client/` directory contains a CLI tool for manual integration testing against a running server.
+The `test-client/tui/` directory contains an interactive terminal UI for end-to-end manual testing. It drives the full signaling flow — hosting, joining, NAT traversal confirmation, shared chat, and file transfer — all against a live server.
+
+### Building
+
+```bash
+cd test-client/tui
+
+# Run directly (no build step needed)
+go run .
+
+# Or build a binary
+go build -o tui .
+./tui
+```
+
+First time only — if `go.sum` is missing:
+
+```bash
+cd test-client/tui
+go mod tidy
+```
+
+### Running
+
+The TUI starts immediately and connects to `http://localhost:8080` by default. Everything is configured through the interactive menu — there are no command-line flags.
+
+```
+  ╔══════════════════════════════════════════════════╗
+  ║       NAT Punchthrough Hero — Test Client        ║
+  ║           Interactive Testing Console            ║
+  ╚══════════════════════════════════════════════════╝
+
+  [1] Configure Server / API Key
+  [2] Health Check
+  [3] List Games
+  [4] Host a Game
+  [5] Join a Game
+  [6] NAT Punch Test
+  [7] Show State
+  [0] Quit
+```
+
+### Typical workflow
+
+**Two terminals, both pointing at the same server:**
+
+1. Terminal A — host a game:
+   - Press `4` → enter a game name → the TUI registers the game and starts waiting for a joiner
+2. Terminal B — join the game:
+   - Press `5` → enter the join code shown in terminal A
+
+Both clients complete the ICE/signaling exchange automatically. Once connected, the TUI prints which NAT traversal method was used:
+
+```
+  ╔══════════════════════════════════╗
+  ║  NAT TRAVERSAL CONFIRMED         ║
+  ║  Method: punched                 ║
+  ║  Direct UDP hole-punch succeeded ║
+  ╚══════════════════════════════════╝
+```
+
+Methods reported: `direct` (LAN), `punched` (UDP hole-punch), `relayed` (TURN fallback).
+
+### Chat room
+
+After connecting, both peers enter a shared chat room hosted by the server. Type any text and press Enter to send.
+
+| Command | Description |
+|---------|-------------|
+| `/file <path>` | Offer a file to all peers |
+| `/accept <id> [dir]` | Accept an incoming file offer, optionally specifying save directory (defaults to current directory) |
+| `/decline <id>` | Decline an incoming file offer |
+| `/help` | Show command reference |
+| `/quit` | Leave the chat and return to the main menu |
+
+### File transfer
+
+File data is chunked (32 KB chunks), base64-encoded, and routed through the signaling server. A CRC32 integrity check runs on receipt — the TUI prints a pass/fail result and the saved file path.
+
+Example session:
+
+```
+[14:32] You: /file ~/Downloads/demo.zip
+  → File offer sent: demo.zip (2.4 MB) [id: a1b2c3]
+
+[14:32] Peer-7f3a: incoming file offer
+  demo.zip  2.4 MB  [id: a1b2c3]
+  /accept a1b2c3         (save to current dir)
+  /accept a1b2c3 ~/recv  (save to specific dir)
+
+[14:32] Peer-7f3a: /accept a1b2c3 ~/recv
+  ✓ demo.zip saved to /home/user/recv/demo.zip — CRC32 OK
+```
+
+### If the server requires an API key
+
+Select option `1` from the main menu to set the server URL and API key before doing anything else.
+
+## Test Client (CLI)
+
+The `test-client/` directory contains a CLI tool for scripted/CI integration testing against a running server.
 
 ```bash
 cd test-client

@@ -44,8 +44,8 @@ Server is running at `http://localhost:8080`. Dashboard at `http://localhost:808
 ```bash
 cd server
 go build -o natpunch-server .
-./natpunch-server setup    # Interactive setup wizard
-./natpunch-server serve    # Start the server
+./server setup    # Interactive setup wizard
+./server serve    # Start the server
 ```
 
 ### VPS One-Liner
