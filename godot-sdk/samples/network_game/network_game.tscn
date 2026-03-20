@@ -1,0 +1,50 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://samples/network_game/network_game.gd" id="1_game"]
+[ext_resource type="Script" path="res://addons/nat_punchthrough/nat_client.gd" id="2_nat"]
+[ext_resource type="PackedScene" path="res://samples/network_game/player.tscn" id="3_player"]
+
+[sub_resource type="PlaneMesh" id="SubResource_plane"]
+size = Vector2(200, 200)
+
+[sub_resource type="BoxShape3D" id="SubResource_box"]
+size = Vector3(200, 0.2, 200)
+
+[sub_resource type="StandardMaterial3D" id="SubResource_ground_mat"]
+albedo_color = Color(0.35, 0.55, 0.35, 1)
+
+[sub_resource type="Environment" id="SubResource_env"]
+background_mode = 1
+background_color = Color(0.53, 0.71, 0.87, 1)
+ambient_light_source = 1
+ambient_light_color = Color(0.7, 0.7, 0.75, 1)
+ambient_light_energy = 0.5
+
+[node name="NetworkGame" type="Node3D"]
+script = ExtResource("1_game")
+player_scene = ExtResource("3_player")
+
+[node name="NATClient" type="Node" parent="."]
+script = ExtResource("2_nat")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("SubResource_env")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.643, -0.766, 0, 0.766, 0.643, 0, 20, 0)
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="GroundMesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("SubResource_plane")
+material_override = SubResource("SubResource_ground_mat")
+
+[node name="GroundCollision" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("SubResource_box")
+
+[node name="Players" type="Node3D" parent="."]
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://samples/network_game/player.tscn")
+spawn_path = NodePath("../Players")

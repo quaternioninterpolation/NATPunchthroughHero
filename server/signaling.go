@@ -273,6 +273,7 @@ func (h *SignalingHub) handleRegisterHost(peer *Peer, payload json.RawMessage) {
 type requestJoinPayload struct {
 	GameID   string `json:"game_id"`
 	JoinCode string `json:"join_code"`
+	Password string `json:"password"` // Plaintext; compared against stored hash
 }
 
 func (h *SignalingHub) handleRequestJoin(peer *Peer, payload json.RawMessage) {
@@ -297,6 +298,14 @@ func (h *SignalingHub) handleRequestJoin(peer *Peer, payload json.RawMessage) {
 	if game == nil {
 		peer.SendError("game_not_found", "Game not found")
 		return
+	}
+
+	// Validate password if the game has one
+	if game.Password != "" {
+		if p.Password == "" || HashPassword(p.Password) != game.Password {
+			peer.SendError("wrong_password", "Incorrect game password")
+			return
+		}
 	}
 
 	h.mu.RLock()

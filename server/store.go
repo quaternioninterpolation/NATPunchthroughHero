@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -27,6 +28,7 @@ type Game struct {
 	NATType     string          `json:"nat_type,omitempty"`
 	ConnMethod  string          `json:"conn_method,omitempty"` // "direct", "punched", "relayed"
 	JoinCode    string          `json:"join_code,omitempty"`
+	Password    string          `json:"-"` // SHA-256 hex hash; never exposed
 	Private     bool            `json:"private"`
 	CreatedAt   time.Time       `json:"created_at"`
 	LastSeen    time.Time       `json:"-"`
@@ -44,6 +46,7 @@ type GamePublic struct {
 	Data        json.RawMessage `json:"data,omitempty"`
 	NATType     string          `json:"nat_type,omitempty"`
 	JoinCode    string          `json:"join_code,omitempty"`
+	HasPassword bool            `json:"has_password"`
 	Private     bool            `json:"private"`
 	CreatedAt   time.Time       `json:"created_at"`
 }
@@ -60,6 +63,7 @@ func (g *Game) ToPublic() GamePublic {
 		Data:        g.Data,
 		NATType:     g.NATType,
 		JoinCode:    g.JoinCode,
+		HasPassword: g.Password != "",
 		Private:     g.Private,
 		CreatedAt:   g.CreatedAt,
 	}
@@ -323,6 +327,13 @@ func (s *GameStore) evict() {
 			s.totalExpired++
 		}
 	}
+}
+
+// HashPassword returns the SHA-256 hex digest of a password string.
+// Used for storing and comparing game passwords without keeping plaintext.
+func HashPassword(password string) string {
+	h := sha256.Sum256([]byte(password))
+	return hex.EncodeToString(h[:])
 }
 
 // generateGameID creates a random game identifier (16 hex chars).

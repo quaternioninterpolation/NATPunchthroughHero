@@ -51,6 +51,8 @@ namespace NatPunchthrough
         public string GameId { get => _gameId; set => _gameId = value; }
         public string JoinCode { get => _joinCode; set => _joinCode = value; }
         public string HostToken { get; set; }
+        /// <summary>Game password for joining password-protected games. Set before calling StartClient().</summary>
+        public string GamePassword { get; set; }
         public string DetectedNATType => _detectedNATType;
         public ConnectionMethod ActiveConnectionMethod => _connectionMethod;
         public TurnCredentials TurnCredentials { get; set; }
@@ -297,7 +299,7 @@ namespace NatPunchthrough
                 if (!string.IsNullOrEmpty(apiKey))
                     signalingUrl += "?key=" + Uri.EscapeDataString(apiKey);
 
-                var punchTask = _traversal.AttemptPunch(signalingUrl, gameId, null, punchTimeout);
+                var punchTask = _traversal.AttemptPunch(signalingUrl, gameId, null, punchTimeout, GamePassword);
                 yield return new WaitUntil(() => punchTask.IsCompleted);
 
                 if (punchTask.Result.Success)

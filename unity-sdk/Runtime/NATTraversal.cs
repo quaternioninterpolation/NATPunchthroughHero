@@ -290,7 +290,8 @@ namespace NatPunchthrough
             string signalingUrl,
             string gameId,
             string peerEndpoint,
-            float timeoutSeconds)
+            float timeoutSeconds,
+            string gamePassword = null)
         {
             var tcs = new TaskCompletionSource<PunchResult>();
             var cts = new CancellationTokenSource(
@@ -391,12 +392,14 @@ namespace NatPunchthrough
                 _signalingWs.Connect();
 
                 // Send join request
-                string joinMsg = JsonUtility.ToJson(new SignalingMessage
+                var joinPayload = new SignalingMessage
                 {
                     type = "request_join",
                     game_id = gameId
-                });
-                _signalingWs.Send(joinMsg);
+                };
+                if (!string.IsNullOrEmpty(gamePassword))
+                    joinPayload.password = gamePassword;
+                _signalingWs.Send(JsonUtility.ToJson(joinPayload));
 
                 // ICE candidates will be sent after server sends "gather_candidates"
 
@@ -536,7 +539,7 @@ namespace NatPunchthrough
         // TURN fallback fields
         public string[] turn_server;
         public string username;
-        public string password;
+        public string password; // Game password (request_join) or TURN password (turn_fallback)
         public int ttl;
     }
 

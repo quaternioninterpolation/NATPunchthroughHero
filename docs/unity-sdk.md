@@ -172,6 +172,7 @@ public class NATTransport : Transport
     public string GameId;
     public string HostToken;
     public string JoinCode;
+    public string GamePassword;       // Set before StartClient() for password-protected games
     public string DetectedNATType;
     public TurnCredentials TurnCredentials;
 
@@ -301,6 +302,7 @@ public class GameRegistration
     public int MaxPlayers;
     public int CurrentPlayers = 1;
     public string NatType = "unknown";
+    public string Password;  // Optional game password (stored as SHA-256 hash on server)
     public Dictionary<string, string> Data;
 }
 
@@ -323,6 +325,7 @@ public class GameInfo
     public int MaxPlayers;
     public int CurrentPlayers;
     public string NatType;
+    public bool HasPassword;  // True if a password is required to join
     public Dictionary<string, string> Data;
     public DateTime CreatedAt;
 }

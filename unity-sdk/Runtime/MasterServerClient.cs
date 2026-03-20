@@ -277,6 +277,8 @@ namespace NatPunchthrough
         public int max_players = 4;
         public int current_players = 1;
         public string nat_type = "unknown";
+        /// <summary>Optional game password. Sent as plaintext over HTTPS; server stores as SHA-256 hash.</summary>
+        public string password;
         // Note: Unity's JsonUtility doesn't support Dictionary.
         // Use a custom serializable class or JSON library for metadata.
     }
@@ -306,6 +308,7 @@ namespace NatPunchthrough
         public int max_players;
         public int current_players;
         public string nat_type;
+        public bool has_password;
         public string created_at;
 
         // Convenience properties
@@ -315,6 +318,7 @@ namespace NatPunchthrough
         public int MaxPlayers => max_players;
         public int CurrentPlayers => current_players;
         public string NatType => nat_type;
+        public bool HasPassword => has_password;
     }
 
     [Serializable]

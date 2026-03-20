@@ -6,316 +6,1223 @@
 <title>NAT Punchthrough Hero — Admin Dashboard</title>
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --border: #2a2d3a;
-    --text: #e1e4ed;
-    --text-dim: #8b8fa3;
-    --accent: #6c63ff;
-    --green: #4ade80;
-    --yellow: #facc15;
+    --bg: #080b12;
+    --bg-gradient: linear-gradient(135deg, #080b12 0%, #0d1221 50%, #111827 100%);
+    --surface: rgba(17, 24, 39, 0.7);
+    --surface-solid: #111827;
+    --surface-hover: rgba(24, 33, 50, 0.85);
+    --border: rgba(55, 65, 81, 0.5);
+    --border-glow: rgba(99, 102, 241, 0.3);
+    --text: #f1f5f9;
+    --text-dim: #94a3b8;
+    --text-muted: #64748b;
+    --accent: #818cf8;
+    --accent-bright: #a5b4fc;
+    --accent-glow: rgba(129, 140, 248, 0.15);
+    --green: #34d399;
+    --green-dim: rgba(52, 211, 153, 0.15);
+    --yellow: #fbbf24;
+    --yellow-dim: rgba(251, 191, 36, 0.15);
     --red: #f87171;
+    --red-dim: rgba(248, 113, 113, 0.15);
     --blue: #60a5fa;
+    --blue-dim: rgba(96, 165, 250, 0.15);
+    --cyan: #22d3ee;
+    --cyan-dim: rgba(34, 211, 238, 0.15);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+    --code-bg: rgba(0,0,0,0.3);
+    --input-bg: rgba(0,0,0,0.3);
+    --tabs-bar-bg: rgba(0,0,0,0.2);
+    --hover-overlay: rgba(255,255,255,0.04);
+    --hover-overlay-strong: rgba(255,255,255,0.08);
+    --table-header-bg: rgba(0,0,0,0.2);
+    --table-hover: rgba(129, 140, 248, 0.04);
+    --table-border: rgba(55, 65, 81, 0.3);
+    --config-item-bg: rgba(0,0,0,0.2);
+    --config-item-hover-bg: rgba(0,0,0,0.3);
+    --help-card-bg: rgba(0,0,0,0.2);
+    --conn-bar-bg: rgba(255,255,255,0.05);
+    --glow-purple: rgba(129,140,248,0.06);
+    --glow-cyan: rgba(34,211,238,0.04);
+    --toast-success-bg: rgba(6, 78, 59, 0.9);
+    --toast-error-bg: rgba(127, 29, 29, 0.9);
+    --toast-info-bg: rgba(30, 27, 75, 0.9);
+    --btn-primary-gradient: linear-gradient(135deg, var(--accent) 0%, #6366f1 100%);
+    --logo-gradient-from: var(--text);
   }
+
+  /* ─── Light Theme ─── */
+  [data-theme="light"] {
+    --bg: #f4f6fb;
+    --bg-gradient: linear-gradient(135deg, #f4f6fb 0%, #eef1f8 50%, #e8ecf4 100%);
+    --surface: rgba(255, 255, 255, 0.85);
+    --surface-solid: #ffffff;
+    --surface-hover: rgba(255, 255, 255, 0.95);
+    --border: rgba(203, 213, 225, 0.7);
+    --border-glow: rgba(99, 102, 241, 0.35);
+    --text: #1e293b;
+    --text-dim: #475569;
+    --text-muted: #94a3b8;
+    --accent: #6366f1;
+    --accent-bright: #4f46e5;
+    --accent-glow: rgba(99, 102, 241, 0.1);
+    --green: #059669;
+    --green-dim: rgba(5, 150, 105, 0.1);
+    --yellow: #d97706;
+    --yellow-dim: rgba(217, 119, 6, 0.1);
+    --red: #dc2626;
+    --red-dim: rgba(220, 38, 38, 0.08);
+    --blue: #2563eb;
+    --blue-dim: rgba(37, 99, 235, 0.1);
+    --cyan: #0891b2;
+    --cyan-dim: rgba(8, 145, 178, 0.1);
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.06);
+    --code-bg: rgba(241, 245, 249, 0.9);
+    --input-bg: rgba(255,255,255,0.8);
+    --tabs-bar-bg: rgba(241, 245, 249, 0.6);
+    --hover-overlay: rgba(0,0,0,0.02);
+    --hover-overlay-strong: rgba(0,0,0,0.04);
+    --table-header-bg: rgba(241, 245, 249, 0.8);
+    --table-hover: rgba(99, 102, 241, 0.04);
+    --table-border: rgba(226, 232, 240, 0.8);
+    --config-item-bg: rgba(248, 250, 252, 0.9);
+    --config-item-hover-bg: rgba(241, 245, 249, 0.9);
+    --help-card-bg: rgba(248, 250, 252, 0.9);
+    --conn-bar-bg: rgba(0,0,0,0.06);
+    --glow-purple: rgba(99,102,241,0.04);
+    --glow-cyan: rgba(8,145,178,0.03);
+    --toast-success-bg: rgba(240, 253, 244, 0.95);
+    --toast-error-bg: rgba(254, 242, 242, 0.95);
+    --toast-info-bg: rgba(238, 242, 255, 0.95);
+    --btn-primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    --logo-gradient-from: #1e293b;
+  }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     background: var(--bg);
+    background-image: var(--bg-gradient);
+    background-attachment: fixed;
     color: var(--text);
-    line-height: 1.5;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
-  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+  /* Subtle animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 600px 400px at 20% 30%, var(--glow-purple) 0%, transparent 70%),
+      radial-gradient(ellipse 500px 350px at 80% 70%, var(--glow-cyan) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 24px 28px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ─── Header ─── */
   header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 24px;
+    padding: 20px 0 24px;
+    margin-bottom: 28px;
   }
-  header h1 { font-size: 1.25rem; font-weight: 600; }
-  header h1 span { color: var(--accent); }
-  .status-badge {
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--cyan) 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(129,140,248,0.3);
+  }
+
+  .logo-icon svg { width: 24px; height: 24px; color: #fff; }
+
+  .logo-text h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--logo-gradient-from) 0%, var(--accent-bright) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-text .subtitle {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .status-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(12px);
+    border: 1px solid;
+    transition: all 0.3s ease;
   }
-  .status-badge.online { background: rgba(74,222,128,0.15); color: var(--green); }
-  .status-badge.offline { background: rgba(248,113,113,0.15); color: var(--red); }
-  .status-badge::before {
-    content: '';
+
+  .status-pill.online {
+    background: var(--green-dim);
+    border-color: rgba(52, 211, 153, 0.25);
+    color: var(--green);
+  }
+
+  .status-pill.offline {
+    background: var(--red-dim);
+    border-color: rgba(248, 113, 113, 0.25);
+    color: var(--red);
+  }
+
+  .status-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: currentColor;
+    position: relative;
   }
 
-  /* Stats Grid */
+  .status-pill.online .status-dot::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.3;
+    animation: pulse-ring 2s ease-out infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.3; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+
+  .uptime-text {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* ─── Stats Grid ─── */
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
   }
+
+  @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px)  { .stats-grid { grid-template-columns: 1fr; } }
+
   .stat-card {
     background: var(--surface);
+    backdrop-filter: blur(16px);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
   }
-  .stat-card .label { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 4px; }
-  .stat-card .value { font-size: 1.75rem; font-weight: 700; }
-  .stat-card .sub { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
 
-  /* Tabs */
+  .stat-card:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg), 0 0 30px var(--accent-glow);
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: var(--radius) var(--radius) 0 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .stat-card:hover::before { opacity: 1; }
+  .stat-card.card-purple::before { background: linear-gradient(90deg, var(--accent), var(--cyan)); }
+  .stat-card.card-green::before { background: linear-gradient(90deg, var(--green), #6ee7b7); }
+  .stat-card.card-blue::before { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+  .stat-card.card-red::before { background: linear-gradient(90deg, var(--red), var(--yellow)); }
+
+  .stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stat-icon svg { width: 20px; height: 20px; }
+  .stat-icon.purple { background: var(--accent-glow); color: var(--accent); }
+  .stat-icon.green  { background: var(--green-dim); color: var(--green); }
+  .stat-icon.blue   { background: var(--blue-dim); color: var(--blue); }
+  .stat-icon.red    { background: var(--red-dim); color: var(--red); }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* ─── Tabs ─── */
+  .tabs-wrapper {
+    background: var(--surface);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
   .tabs {
     display: flex;
     gap: 0;
+    padding: 6px 8px;
+    background: var(--tabs-bar-bg);
     border-bottom: 1px solid var(--border);
-    margin-bottom: 20px;
   }
+
   .tab {
-    padding: 10px 20px;
+    padding: 10px 22px;
     cursor: pointer;
-    color: var(--text-dim);
-    font-size: 0.9rem;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: var(--radius-xs);
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+    position: relative;
   }
-  .tab:hover { color: var(--text); }
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
+  .tab svg { width: 16px; height: 16px; opacity: 0.7; }
+  .tab:hover { color: var(--text-dim); background: var(--hover-overlay); }
+
+  .tab.active {
+    color: var(--accent-bright);
+    background: var(--accent-glow);
+  }
+
+  .tab.active svg { opacity: 1; }
+
+  .tab-body { padding: 24px; }
   .tab-content { display: none; }
-  .tab-content.active { display: block; }
+  .tab-content.active { display: block; animation: fadeIn 0.25s ease; }
 
-  /* Tables */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── Connection Method Chart ─── */
+  .conn-bar-container {
+    display: flex;
+    gap: 2px;
+    height: 8px;
+    border-radius: 100px;
+    overflow: hidden;
+    background: var(--conn-bar-bg);
+    margin-top: 10px;
+    margin-bottom: 8px;
+  }
+
+  .conn-bar-segment {
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 0;
+    border-radius: 100px;
+  }
+
+  .conn-bar-segment.direct { background: var(--green); }
+  .conn-bar-segment.punched { background: var(--blue); }
+  .conn-bar-segment.relayed { background: var(--yellow); }
+
+  .conn-legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .conn-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .conn-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ─── Tables ─── */
+  .table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
   }
+
   th, td {
-    padding: 12px 16px;
+    padding: 13px 18px;
     text-align: left;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.85rem;
+    border-bottom: 1px solid var(--table-border);
+    font-size: 0.82rem;
   }
-  th { color: var(--text-dim); font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: var(--table-header-bg);
+    position: sticky;
+    top: 0;
+  }
+
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(108,99,255,0.05); }
+
+  tr:hover td {
+    background: var(--table-hover);
+  }
+
+  td { color: var(--text-dim); }
+
+  .game-name {
+    color: var(--text);
+    font-weight: 600;
+  }
 
   .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: capitalize;
   }
-  .badge.direct { background: rgba(74,222,128,0.15); color: var(--green); }
-  .badge.punched { background: rgba(96,165,250,0.15); color: var(--blue); }
-  .badge.relayed { background: rgba(250,204,21,0.15); color: var(--yellow); }
-  .badge.blocked { background: rgba(248,113,113,0.15); color: var(--red); }
 
-  /* Actions */
-  .btn {
-    padding: 6px 14px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
+  .badge.direct  { background: var(--green-dim); color: var(--green); }
+  .badge.punched { background: var(--blue-dim); color: var(--blue); }
+  .badge.relayed { background: var(--yellow-dim); color: var(--yellow); }
+  .badge.blocked { background: var(--red-dim); color: var(--red); }
+
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .join-code {
+    font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent-bright);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    background: var(--accent-glow);
+    padding: 3px 8px;
+    border-radius: var(--radius-xs);
+  }
+
+  .player-count {
+    font-weight: 600;
     color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .private-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-left: 6px;
+  }
+
+  .private-badge svg { width: 12px; height: 12px; }
+
+  .time-ago {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ─── Buttons ─── */
+  .btn {
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--hover-overlay);
+    color: var(--text-dim);
     cursor: pointer;
     font-size: 0.8rem;
-    transition: all 0.2s;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
   }
-  .btn:hover { border-color: var(--accent); }
-  .btn.danger { border-color: var(--red); color: var(--red); }
-  .btn.danger:hover { background: rgba(248,113,113,0.1); }
 
-  /* IP Input */
-  .input-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
+  .btn:hover {
+    background: var(--hover-overlay-strong);
+    border-color: var(--accent);
+    color: var(--text);
+    transform: translateY(-1px);
   }
-  .input-row input {
+
+  .btn:active { transform: translateY(0); }
+
+  .btn-primary {
+    background: var(--btn-primary-gradient);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(129,140,248,0.3);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 4px 20px rgba(129,140,248,0.4);
+    border-color: transparent;
+    color: #fff;
+  }
+
+  .btn-danger {
+    border-color: rgba(248, 113, 113, 0.3);
+    color: var(--red);
+  }
+
+  .btn-danger:hover {
+    background: var(--red-dim);
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  .btn svg { width: 14px; height: 14px; }
+
+  /* ─── Inputs ─── */
+  .input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .input-group input {
     flex: 1;
-    padding: 8px 14px;
+    padding: 10px 16px;
     border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg);
+    border-radius: var(--radius-xs);
+    background: var(--input-bg);
     color: var(--text);
     font-size: 0.85rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
   }
-  .input-row input:focus { outline: none; border-color: var(--accent); }
 
-  /* Config display */
+  .input-group input::placeholder { color: var(--text-muted); }
+  .input-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  /* ─── Section Headers ─── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title svg { width: 18px; height: 18px; color: var(--accent); }
+
+  .section-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  /* ─── Config Grid ─── */
   .config-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 12px;
   }
-  .config-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 16px;
-  }
-  .config-item .key { font-size: 0.75rem; color: var(--text-dim); }
-  .config-item .val { font-size: 0.9rem; font-weight: 500; }
 
-  .empty { text-align: center; padding: 40px; color: var(--text-dim); }
-  .refresh-note { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 12px; }
+  .config-item {
+    background: var(--config-item-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    transition: all 0.2s ease;
+  }
+
+  .config-item:hover {
+    border-color: rgba(129,140,248,0.2);
+    background: var(--config-item-hover-bg);
+  }
+
+  .config-key {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  .config-val {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  .config-val.bool-true { color: var(--green); }
+  .config-val.bool-false { color: var(--red); }
+
+  /* ─── Help Cards ─── */
+  .help-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .help-card {
+    background: var(--help-card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 22px;
+    transition: all 0.2s ease;
+  }
+
+  .help-card:hover {
+    border-color: rgba(129,140,248,0.2);
+  }
+
+  .help-card h3 {
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .help-card h3 svg { width: 18px; height: 18px; color: var(--accent); }
+
+  .api-endpoint {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 0.78rem;
+    border-bottom: 1px solid var(--table-border);
+  }
+
+  .api-endpoint:last-child { border-bottom: none; }
+
+  .api-method {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .api-method.get    { background: var(--green-dim); color: var(--green); }
+  .api-method.post   { background: var(--blue-dim); color: var(--blue); }
+  .api-method.delete { background: var(--red-dim); color: var(--red); }
+
+  .api-path {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.76rem;
+    color: var(--text-dim);
+  }
+
+  .api-desc {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  pre.code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    border-radius: var(--radius-xs);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.76rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    color: var(--text-dim);
+  }
+
+  /* ─── Empty State ─── */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+  }
+
+  .empty-state svg {
+    width: 48px;
+    height: 48px;
+    color: var(--text-muted);
+    opacity: 0.3;
+    margin-bottom: 12px;
+  }
+
+  .empty-state p {
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .empty-state .sub {
+    font-size: 0.75rem;
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+
+  /* ─── Toast Notifications ─── */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .toast {
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 600;
+    backdrop-filter: blur(16px);
+    border: 1px solid;
+    box-shadow: var(--shadow-lg);
+    animation: toastIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 360px;
+  }
+
+  .toast svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .toast.success {
+    background: var(--toast-success-bg);
+    border-color: rgba(52, 211, 153, 0.3);
+    color: var(--green);
+  }
+
+  .toast.error {
+    background: var(--toast-error-bg);
+    border-color: rgba(248, 113, 113, 0.3);
+    color: var(--red);
+  }
+
+  .toast.info {
+    background: var(--toast-info-bg);
+    border-color: rgba(129, 140, 248, 0.3);
+    color: var(--accent-bright);
+  }
+
+  .toast.exit { animation: toastOut 0.25s ease forwards; }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(24px) scale(0.95); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+  }
+
+  @keyframes toastOut {
+    to { opacity: 0; transform: translateX(24px) scale(0.95); }
+  }
+
+  /* ─── Refresh Indicator ─── */
+  .refresh-bar {
+    height: 2px;
+    background: var(--conn-bar-bg);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .refresh-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--cyan));
+    border-radius: 100px;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* ─── Separator ─── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+  }
+
+  /* ─── Theme Toggle ─── */
+  .theme-toggle {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--hover-overlay);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+    transform: translateY(-1px);
+  }
+
+  .theme-toggle svg { width: 18px; height: 18px; transition: transform 0.3s ease; }
+  .theme-toggle:hover svg { transform: rotate(20deg); }
+
+  .theme-toggle .icon-sun  { display: none; }
+  .theme-toggle .icon-moon { display: block; }
+  [data-theme="light"] .theme-toggle .icon-sun  { display: block; }
+  [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .container { padding: 16px; }
+    header { flex-direction: column; gap: 12px; align-items: flex-start; }
+    .header-right { width: 100%; justify-content: space-between; }
+    .tabs { overflow-x: auto; white-space: nowrap; }
+    .tab { padding: 8px 14px; font-size: 0.78rem; }
+    .help-grid { grid-template-columns: 1fr; }
+    .api-desc { display: none; }
+    .stat-value { font-size: 1.6rem; }
+  }
 </style>
 </head>
 <body>
 <div class="container">
+  <!-- Header -->
   <header>
-    <h1><span>NAT Punchthrough</span> Hero</h1>
-    <div>
-      <span id="status-badge" class="status-badge online">Online</span>
-      <span style="color:var(--text-dim);font-size:0.8rem;margin-left:12px">
-        Uptime: <span id="uptime">—</span>
-      </span>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <h1>NAT Punchthrough Hero</h1>
+        <div class="subtitle">Admin Dashboard</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="uptime-text">Uptime: <span id="uptime">--</span></span>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+      <div id="status-pill" class="status-pill online">
+        <span class="status-dot"></span>
+        <span id="status-text">Online</span>
+      </div>
     </div>
   </header>
 
-  <!-- Stats -->
+  <!-- Stats Grid -->
   <div class="stats-grid">
-    <div class="stat-card">
-      <div class="label">Active Games</div>
-      <div class="value" id="active-games">—</div>
-      <div class="sub" id="total-registered">Total registered: —</div>
+    <div class="stat-card card-purple">
+      <div class="stat-header">
+        <span class="stat-label">Active Games</span>
+        <div class="stat-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M17 12h.01"/><path d="M7 12h.01"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value" id="active-games">--</div>
+      <div class="stat-sub" id="total-registered">Total registered: --</div>
     </div>
-    <div class="stat-card">
-      <div class="label">Total Players</div>
-      <div class="value" id="total-players">—</div>
+
+    <div class="stat-card card-green">
+      <div class="stat-header">
+        <span class="stat-label">Total Players</span>
+        <div class="stat-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value" id="total-players">--</div>
+      <div class="stat-sub">&nbsp;</div>
     </div>
-    <div class="stat-card">
-      <div class="label">Connection Methods</div>
-      <div class="value" id="conn-methods">—</div>
-      <div class="sub" id="conn-breakdown"></div>
+
+    <div class="stat-card card-blue">
+      <div class="stat-header">
+        <span class="stat-label">Connections</span>
+        <div class="stat-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+            <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+            <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
+            <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value" id="conn-methods">--</div>
+      <div id="conn-bar" class="conn-bar-container" style="display:none;">
+        <div class="conn-bar-segment direct" id="bar-direct" style="width:0%"></div>
+        <div class="conn-bar-segment punched" id="bar-punched" style="width:0%"></div>
+        <div class="conn-bar-segment relayed" id="bar-relayed" style="width:0%"></div>
+      </div>
+      <div class="conn-legend" id="conn-legend"></div>
     </div>
-    <div class="stat-card">
-      <div class="label">Blocked IPs</div>
-      <div class="value" id="blocked-ips">—</div>
-      <div class="sub" id="total-violations">Violations: —</div>
+
+    <div class="stat-card card-red">
+      <div class="stat-header">
+        <span class="stat-label">Blocked IPs</span>
+        <div class="stat-icon red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value" id="blocked-ips">--</div>
+      <div class="stat-sub" id="total-violations">Violations: --</div>
     </div>
   </div>
 
   <!-- Tabs -->
-  <div class="tabs">
-    <div class="tab active" data-tab="games">Games</div>
-    <div class="tab" data-tab="security">Security</div>
-    <div class="tab" data-tab="config">Config</div>
-    <div class="tab" data-tab="help">Help</div>
-  </div>
-
-  <!-- Games Tab -->
-  <div id="tab-games" class="tab-content active">
-    <p class="refresh-note">Auto-refreshes every 5 seconds</p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Map</th>
-          <th>Players</th>
-          <th>Version</th>
-          <th>Join Code</th>
-          <th>Connection</th>
-          <th>Created</th>
-        </tr>
-      </thead>
-      <tbody id="games-table">
-        <tr><td colspan="7" class="empty">Loading...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Security Tab -->
-  <div id="tab-security" class="tab-content">
-    <h3 style="margin-bottom:12px;font-size:1rem;">IP Blocklist</h3>
-    <div class="input-row">
-      <input type="text" id="block-ip-input" placeholder="IP address or CIDR (e.g., 1.2.3.4 or 10.0.0.0/8)">
-      <button class="btn" onclick="addToBlocklist()">Block IP</button>
+  <div class="tabs-wrapper">
+    <div class="tabs">
+      <div class="tab active" data-tab="games">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M17 12h.01"/><path d="M7 12h.01"/>
+        </svg>
+        Games
+      </div>
+      <div class="tab" data-tab="security">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Security
+      </div>
+      <div class="tab" data-tab="config">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        Config
+      </div>
+      <div class="tab" data-tab="help">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
+        </svg>
+        Help
+      </div>
     </div>
-    <table>
-      <thead>
-        <tr><th>IP / CIDR</th><th>Action</th></tr>
-      </thead>
-      <tbody id="blocklist-table">
-        <tr><td colspan="2" class="empty">Loading...</td></tr>
-      </tbody>
-    </table>
 
-    <h3 style="margin:24px 0 12px;font-size:1rem;">Auto-Blocked IPs</h3>
-    <table>
-      <thead>
-        <tr><th>IP</th><th>Violations</th><th>Block Count</th><th>Expires</th><th>Action</th></tr>
-      </thead>
-      <tbody id="autoblock-table">
-        <tr><td colspan="5" class="empty">Loading...</td></tr>
-      </tbody>
-    </table>
-  </div>
+    <div class="tab-body">
+      <!-- Games Tab -->
+      <div id="tab-games" class="tab-content active">
+        <div class="refresh-bar"><div class="refresh-bar-inner" id="games-refresh-bar"></div></div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Map</th>
+                <th>Players</th>
+                <th>Version</th>
+                <th>Join Code</th>
+                <th>Connection</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="games-table">
+              <tr><td colspan="7"><div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/></svg>
+                <p>Loading games...</p>
+              </div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-  <!-- Config Tab -->
-  <div id="tab-config" class="tab-content">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="font-size:1rem;">Server Configuration</h3>
-      <button class="btn" onclick="reloadConfig()">Reload Config</button>
-    </div>
-    <div class="config-grid" id="config-grid">
-      <div class="config-item"><div class="key">Loading...</div></div>
-    </div>
-  </div>
+      <!-- Security Tab -->
+      <div id="tab-security" class="tab-content">
+        <div class="section-header">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>
+            </svg>
+            IP Blocklist
+          </div>
+        </div>
+        <div class="input-group">
+          <input type="text" id="block-ip-input" placeholder="IP address or CIDR range (e.g., 1.2.3.4 or 10.0.0.0/8)">
+          <button class="btn btn-primary" onclick="addToBlocklist()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+            Block IP
+          </button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>IP / CIDR</th><th style="width:100px;text-align:right;">Action</th></tr>
+            </thead>
+            <tbody id="blocklist-table">
+              <tr><td colspan="2"><div class="empty-state"><p>Loading...</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
 
-  <!-- Help Tab -->
-  <div id="tab-help" class="tab-content">
-    <div class="stat-card" style="margin-bottom:16px;">
-      <h3 style="margin-bottom:12px;">Quick Reference</h3>
-      <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:12px;">
-        This dashboard shows real-time status of your NAT Punchthrough server.
-      </p>
-      <h4 style="margin:12px 0 8px;">API Endpoints</h4>
-      <pre style="background:var(--bg);padding:12px;border-radius:8px;font-size:0.8rem;overflow-x:auto;">
-GET  /api/health          — Server health check
-GET  /api/games           — List active games
-POST /api/games           — Register a new game
-GET  /api/games/{id}      — Get game details
-DEL  /api/games/{id}      — Remove a game (Auth: Bearer token)
-POST /api/games/{id}/heartbeat — Keep game alive
-GET  /api/games/{id}/turn — Get TURN credentials
-POST /api/turn-credentials — Get TURN credentials (alt)
-GET  /ws                  — WebSocket signaling
-GET  /ws/signaling        — WebSocket signaling (alt)</pre>
-      <h4 style="margin:12px 0 8px;">Diagnostic Commands</h4>
-      <pre style="background:var(--bg);padding:12px;border-radius:8px;font-size:0.8rem;overflow-x:auto;">
-# Check server health
+        <div class="divider"></div>
+
+        <div class="section-header">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636-2.87L13.637 3.59a1.914 1.914 0 0 0-3.274 0z"/><path d="M12 17h.01"/>
+            </svg>
+            Auto-Blocked IPs
+          </div>
+        </div>
+        <div class="section-subtitle">Automatically blocked by the protection system for exceeding violation thresholds</div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>IP Address</th><th>Violations</th><th>Block Count</th><th>Expires</th><th style="width:100px;text-align:right;">Action</th></tr>
+            </thead>
+            <tbody id="autoblock-table">
+              <tr><td colspan="5"><div class="empty-state"><p>Loading...</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Config Tab -->
+      <div id="tab-config" class="tab-content">
+        <div class="section-header">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            Server Configuration
+          </div>
+          <button class="btn" onclick="reloadConfig()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            Reload Config
+          </button>
+        </div>
+        <div class="config-grid" id="config-grid">
+          <div class="config-item"><div class="config-key">Loading...</div><div class="config-val">--</div></div>
+        </div>
+      </div>
+
+      <!-- Help Tab -->
+      <div id="tab-help" class="tab-content">
+        <div class="help-grid">
+          <div class="help-card">
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+              API Endpoints
+            </h3>
+            <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/health</span><span class="api-desc">Health check</span></div>
+            <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/games</span><span class="api-desc">List games</span></div>
+            <div class="api-endpoint"><span class="api-method post">POST</span><span class="api-path">/api/games</span><span class="api-desc">Register game</span></div>
+            <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/games/{id}</span><span class="api-desc">Game details</span></div>
+            <div class="api-endpoint"><span class="api-method delete">DEL</span><span class="api-path">/api/games/{id}</span><span class="api-desc">Remove game</span></div>
+            <div class="api-endpoint"><span class="api-method post">POST</span><span class="api-path">/api/games/{id}/heartbeat</span><span class="api-desc">Keep alive</span></div>
+            <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/api/games/{id}/turn</span><span class="api-desc">TURN credentials</span></div>
+            <div class="api-endpoint"><span class="api-method get">GET</span><span class="api-path">/ws/signaling</span><span class="api-desc">WebSocket</span></div>
+          </div>
+
+          <div class="help-card" style="grid-row: span 2;">
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+              Diagnostic Commands
+            </h3>
+            <pre class="code-block"># Check server health
 curl http://localhost:8080/api/health
 
-# Test STUN connectivity (requires stunclient)
-stunclient your-server-ip
+# List active games
+curl -H "X-API-Key: YOUR_KEY" \
+  http://localhost:8080/api/games
 
-# View logs
+# Register a test game
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_KEY" \
+  -d '{"name":"Test","max_players":4}' \
+  http://localhost:8080/api/games
+
+# Test STUN connectivity
+stunclient your-server-ip 3478
+
+# View server logs
 docker compose logs -f server
+
+# View TURN relay logs
 docker compose logs -f coturn</pre>
-      <h4 style="margin:12px 0 8px;">Documentation</h4>
-      <p style="color:var(--text-dim);font-size:0.85rem;">
-        Full documentation is available in the <code>docs/</code> folder of the project repository.
-      </p>
+          </div>
+
+          <div class="help-card">
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              Documentation
+            </h3>
+            <p style="color:var(--text-dim);font-size:0.82rem;line-height:1.7;">
+              Full documentation is available in the <code style="background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:0.78rem;">docs/</code> folder of the project repository, including:
+            </p>
+            <ul style="margin-top:10px;padding-left:18px;color:var(--text-muted);font-size:0.8rem;line-height:2;">
+              <li>Quick Start Guide</li>
+              <li>Architecture Deep Dive</li>
+              <li>Unity SDK Integration</li>
+              <li>Godot SDK Integration</li>
+              <li>Security Hardening</li>
+              <li>Production Deployment</li>
+              <li>Troubleshooting</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
 <script>
-  // Tab switching
+  // ─── Theme Toggle ───
+  (function() {
+    const saved = localStorage.getItem('natpunch-theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  })();
+
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    if (next === 'dark') {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', next);
+    }
+    localStorage.setItem('natpunch-theme', next);
+  });
+
+  // ─── Tab Switching ───
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -325,7 +1232,28 @@ docker compose logs -f coturn</pre>
     });
   });
 
-  // API helper
+  // ─── Toast Notifications ───
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icons = {
+      success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>',
+      error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>',
+      info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>'
+    };
+
+    toast.innerHTML = (icons[type] || icons.info) + `<span>${esc(message)}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('exit');
+      setTimeout(() => toast.remove(), 250);
+    }, 3500);
+  }
+
+  // ─── API Helper ───
   async function api(path, opts = {}) {
     try {
       const resp = await fetch(path, {
@@ -333,43 +1261,69 @@ docker compose logs -f coturn</pre>
         ...opts
       });
       return await resp.json();
-    } catch(e) {
+    } catch (e) {
       console.error('API error:', e);
       return null;
     }
   }
 
-  // Refresh stats
+  // ─── Refresh Progress Bar ───
+  let refreshInterval = 5000;
+  let lastRefresh = Date.now();
+
+  function updateRefreshBar() {
+    const bar = document.getElementById('games-refresh-bar');
+    if (!bar) return;
+    const elapsed = Date.now() - lastRefresh;
+    const pct = Math.min((elapsed / refreshInterval) * 100, 100);
+    bar.style.width = pct + '%';
+    requestAnimationFrame(updateRefreshBar);
+  }
+  requestAnimationFrame(updateRefreshBar);
+
+  // ─── Refresh Stats ───
   async function refreshStats() {
     const data = await api('/admin/api/stats');
     if (!data) {
-      document.getElementById('status-badge').className = 'status-badge offline';
-      document.getElementById('status-badge').textContent = 'Offline';
+      document.getElementById('status-pill').className = 'status-pill offline';
+      document.getElementById('status-text').textContent = 'Offline';
       return;
     }
 
-    document.getElementById('status-badge').className = 'status-badge online';
-    document.getElementById('status-badge').textContent = 'Online';
-    document.getElementById('uptime').textContent = data.uptime || '—';
-    document.getElementById('active-games').textContent = data.store?.active_games ?? '—';
-    document.getElementById('total-players').textContent = data.store?.total_players ?? '—';
-    document.getElementById('total-registered').textContent = 'Total registered: ' + (data.store?.total_registered ?? '—');
-    document.getElementById('blocked-ips').textContent = data.protection?.currently_blocked ?? '—';
-    document.getElementById('total-violations').textContent = 'Violations: ' + (data.protection?.total_violations ?? '—');
+    document.getElementById('status-pill').className = 'status-pill online';
+    document.getElementById('status-text').textContent = 'Online';
+    document.getElementById('uptime').textContent = data.uptime || '--';
 
-    // Connection methods breakdown
+    animateValue('active-games', data.store?.active_games ?? 0);
+    animateValue('total-players', data.store?.total_players ?? 0);
+    document.getElementById('total-registered').textContent = 'Total registered: ' + (data.store?.total_registered ?? '--');
+    animateValue('blocked-ips', data.protection?.currently_blocked ?? 0);
+    document.getElementById('total-violations').textContent = 'Violations: ' + (data.protection?.total_violations ?? '--');
+
+    // Connection methods breakdown with bar chart
     const methods = data.store?.conn_methods || {};
-    const total = Object.values(methods).reduce((a,b) => a+b, 0);
+    const total = Object.values(methods).reduce((a, b) => a + b, 0);
+
     if (total > 0) {
+      animateValue('conn-methods', total);
+
+      const bar = document.getElementById('conn-bar');
+      bar.style.display = 'flex';
+
+      document.getElementById('bar-direct').style.width = ((methods.direct || 0) / total * 100) + '%';
+      document.getElementById('bar-punched').style.width = ((methods.punched || 0) / total * 100) + '%';
+      document.getElementById('bar-relayed').style.width = ((methods.relayed || 0) / total * 100) + '%';
+
+      const legend = document.getElementById('conn-legend');
       const parts = [];
-      if (methods.direct) parts.push(methods.direct + ' direct');
-      if (methods.punched) parts.push(methods.punched + ' punched');
-      if (methods.relayed) parts.push(methods.relayed + ' relayed');
-      document.getElementById('conn-methods').textContent = total;
-      document.getElementById('conn-breakdown').textContent = parts.join(' | ');
+      if (methods.direct) parts.push(`<span class="conn-legend-item"><span class="conn-legend-dot" style="background:var(--green)"></span>${methods.direct} direct</span>`);
+      if (methods.punched) parts.push(`<span class="conn-legend-item"><span class="conn-legend-dot" style="background:var(--blue)"></span>${methods.punched} punched</span>`);
+      if (methods.relayed) parts.push(`<span class="conn-legend-item"><span class="conn-legend-dot" style="background:var(--yellow)"></span>${methods.relayed} relayed</span>`);
+      legend.innerHTML = parts.join('');
     } else {
       document.getElementById('conn-methods').textContent = '0';
-      document.getElementById('conn-breakdown').textContent = '';
+      document.getElementById('conn-bar').style.display = 'none';
+      document.getElementById('conn-legend').innerHTML = '';
     }
 
     // Config
@@ -377,47 +1331,91 @@ docker compose logs -f coturn</pre>
       const grid = document.getElementById('config-grid');
       grid.innerHTML = '';
       for (const [key, val] of Object.entries(data.config)) {
-        grid.innerHTML += `<div class="config-item"><div class="key">${key}</div><div class="val">${val}</div></div>`;
+        const displayVal = val === true || val === false
+          ? `<span class="config-val ${val ? 'bool-true' : 'bool-false'}">${val}</span>`
+          : `<span class="config-val">${esc(String(val || '--'))}</span>`;
+        grid.innerHTML += `<div class="config-item"><div class="config-key">${esc(key.replace(/_/g, ' '))}</div>${displayVal}</div>`;
       }
     }
   }
 
-  // Refresh games
+  // ─── Animated Value Transition ───
+  function animateValue(elementId, newValue) {
+    const el = document.getElementById(elementId);
+    const current = parseInt(el.textContent) || 0;
+    if (current === newValue) {
+      el.textContent = newValue;
+      return;
+    }
+
+    const diff = newValue - current;
+    const steps = Math.min(Math.abs(diff), 20);
+    const stepTime = Math.max(20, 300 / steps);
+    let step = 0;
+
+    const timer = setInterval(() => {
+      step++;
+      const progress = step / steps;
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(current + diff * eased);
+      if (step >= steps) {
+        el.textContent = newValue;
+        clearInterval(timer);
+      }
+    }, stepTime);
+  }
+
+  // ─── Refresh Games ───
   async function refreshGames() {
+    lastRefresh = Date.now();
     const data = await api('/api/games');
     const tbody = document.getElementById('games-table');
     const games = Array.isArray(data) ? data : (data && data.games ? data.games : []);
 
     if (games.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">No active games</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/></svg>
+        <p>No active games</p>
+        <p class="sub">Games will appear here when players host sessions</p>
+      </div></td></tr>`;
       return;
     }
 
     tbody.innerHTML = games.map(g => `
       <tr>
-        <td><strong>${esc(g.name)}</strong>${g.private ? ' 🔒' : ''}</td>
-        <td>${esc(g.map || '—')}</td>
-        <td>${g.cur_players}/${g.max_players}</td>
-        <td>${esc(g.game_version || '—')}</td>
-        <td><code>${esc(g.join_code || '—')}</code></td>
+        <td>
+          <span class="game-name">${esc(g.name)}</span>
+          ${g.private ? '<span class="private-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Private</span>' : ''}
+        </td>
+        <td>${esc(g.map || '--')}</td>
+        <td><span class="player-count">${g.cur_players}<span style="color:var(--text-muted);font-weight:400">/${g.max_players}</span></span></td>
+        <td>${esc(g.game_version || '--')}</td>
+        <td>${g.join_code ? `<span class="join-code">${esc(g.join_code)}</span>` : '--'}</td>
         <td>${connBadge(g.conn_method)}</td>
-        <td>${timeAgo(g.created_at)}</td>
+        <td><span class="time-ago">${timeAgo(g.created_at)}</span></td>
       </tr>
     `).join('');
   }
 
-  // Refresh blocklist
+  // ─── Refresh Blocklist ───
   async function refreshBlocklist() {
     const data = await api('/admin/api/blocklist');
     const tbody = document.getElementById('blocklist-table');
 
     if (!data || !data.blocklist || data.blocklist.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="2" class="empty">Blocklist empty</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="2"><div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <p>Blocklist is empty</p>
+        <p class="sub">No manually blocked IPs</p>
+      </div></td></tr>`;
     } else {
       tbody.innerHTML = data.blocklist.map(ip => `
         <tr>
-          <td>${esc(ip)}</td>
-          <td><button class="btn danger" onclick="removeFromBlocklist('${esc(ip)}')">Remove</button></td>
+          <td style="font-family:'SF Mono','Fira Code',monospace;font-size:0.82rem;color:var(--text);">${esc(ip)}</td>
+          <td style="text-align:right;"><button class="btn btn-danger" onclick="removeFromBlocklist('${esc(ip)}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            Remove
+          </button></td>
         </tr>
       `).join('');
     }
@@ -427,41 +1425,59 @@ docker compose logs -f coturn</pre>
     const atbody = document.getElementById('autoblock-table');
 
     if (!blocked || !blocked.blocked || blocked.blocked.length === 0) {
-      atbody.innerHTML = '<tr><td colspan="5" class="empty">No auto-blocked IPs</td></tr>';
+      atbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <p>No auto-blocked IPs</p>
+        <p class="sub">Protection system has not blocked any IPs</p>
+      </div></td></tr>`;
     } else {
       atbody.innerHTML = blocked.blocked.map(b => `
         <tr>
-          <td>${esc(b.ip)}</td>
-          <td>${b.violations}</td>
-          <td>${b.block_count}</td>
-          <td>${new Date(b.blocked_until).toLocaleString()}</td>
-          <td><button class="btn" onclick="unblockIP('${esc(b.ip)}')">Unblock</button></td>
+          <td style="font-family:'SF Mono','Fira Code',monospace;font-size:0.82rem;color:var(--text);">${esc(b.ip)}</td>
+          <td><span class="badge blocked"><span class="badge-dot"></span>${b.violations}</span></td>
+          <td style="font-variant-numeric:tabular-nums;">${b.block_count}</td>
+          <td style="font-size:0.8rem;color:var(--text-muted);">${new Date(b.blocked_until).toLocaleString()}</td>
+          <td style="text-align:right;"><button class="btn" onclick="unblockIP('${esc(b.ip)}')">Unblock</button></td>
         </tr>
       `).join('');
     }
   }
 
-  // Actions
+  // ─── Actions ───
   async function addToBlocklist() {
     const input = document.getElementById('block-ip-input');
     const ip = input.value.trim();
     if (!ip) return;
 
-    await api('/admin/api/blocklist', {
+    const result = await api('/admin/api/blocklist', {
       method: 'POST',
       body: JSON.stringify({ ip })
     });
-    input.value = '';
-    refreshBlocklist();
+
+    if (result) {
+      showToast(`Blocked ${ip}`, 'success');
+      input.value = '';
+      refreshBlocklist();
+      refreshStats();
+    } else {
+      showToast('Failed to block IP', 'error');
+    }
   }
+
+  // Enter key to submit
+  document.getElementById('block-ip-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addToBlocklist();
+  });
 
   async function removeFromBlocklist(ip) {
     await api('/admin/api/blocklist/' + encodeURIComponent(ip), { method: 'DELETE' });
+    showToast(`Removed ${ip} from blocklist`, 'info');
     refreshBlocklist();
   }
 
   async function unblockIP(ip) {
     await api('/admin/api/unblock/' + encodeURIComponent(ip), { method: 'POST' });
+    showToast(`Unblocked ${ip}`, 'success');
     refreshBlocklist();
     refreshStats();
   }
@@ -469,14 +1485,14 @@ docker compose logs -f coturn</pre>
   async function reloadConfig() {
     const result = await api('/admin/api/reload', { method: 'POST' });
     if (result?.status === 'reloaded') {
-      alert('Configuration reloaded successfully');
+      showToast('Configuration reloaded successfully', 'success');
       refreshStats();
     } else {
-      alert('Reload failed: ' + (result?.error || 'unknown error'));
+      showToast('Reload failed: ' + (result?.error || 'unknown error'), 'error');
     }
   }
 
-  // Helpers
+  // ─── Helpers ───
   function esc(s) {
     if (!s) return '';
     const d = document.createElement('div');
@@ -485,21 +1501,21 @@ docker compose logs -f coturn</pre>
   }
 
   function connBadge(method) {
-    if (!method) return '<span class="badge">unknown</span>';
+    if (!method) return '<span class="badge" style="color:var(--text-muted);">unknown</span>';
     const cls = { direct: 'direct', punched: 'punched', relayed: 'relayed' }[method] || '';
-    return `<span class="badge ${cls}">${method}</span>`;
+    return `<span class="badge ${cls}"><span class="badge-dot"></span>${method}</span>`;
   }
 
   function timeAgo(iso) {
-    if (!iso) return '—';
+    if (!iso) return '--';
     const diff = (Date.now() - new Date(iso).getTime()) / 1000;
     if (diff < 60) return Math.floor(diff) + 's ago';
-    if (diff < 3600) return Math.floor(diff/60) + 'm ago';
-    if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
-    return Math.floor(diff/86400) + 'd ago';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
   }
 
-  // Initial load + auto-refresh
+  // ─── Initial Load + Auto-Refresh ───
   refreshStats();
   refreshGames();
   refreshBlocklist();
@@ -507,7 +1523,7 @@ docker compose logs -f coturn</pre>
   setInterval(() => {
     refreshStats();
     refreshGames();
-  }, 5000);
+  }, refreshInterval);
 
   setInterval(refreshBlocklist, 15000);
 </script>

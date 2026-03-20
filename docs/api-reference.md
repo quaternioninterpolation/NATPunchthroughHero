@@ -71,13 +71,14 @@ List all public games.
     "max_players": 4,
     "current_players": 2,
     "nat_type": "moderate",
+    "has_password": false,
     "data": {"map": "forest", "mode": "coop"},
     "created_at": "2024-01-15T10:30:00Z"
   }
 ]
 ```
 
-> **Note:** `host_ip` and `host_token` are never included in public responses.
+> **Note:** `host_ip`, `host_token`, and the password hash are never included in public responses. Use `has_password` to determine if a password is required to join.
 
 ---
 
@@ -92,6 +93,7 @@ Register a new game.
   "max_players": 4,
   "current_players": 1,
   "nat_type": "unknown",
+  "password": "secret123",
   "data": {
     "map": "forest",
     "mode": "pvp"
@@ -105,6 +107,7 @@ Register a new game.
 | `max_players` | int | Yes | 1-256 |
 | `current_players` | int | No | Default: 1 |
 | `nat_type` | string | No | Informational |
+| `password` | string | No | Max 128 chars. Stored as SHA-256 hash; never returned in responses |
 | `data` | object | No | Arbitrary metadata, max 4KB |
 
 **Response** `201 Created`:
@@ -296,7 +299,7 @@ ws.onmessage = (evt) => {
 | Type | Fields | Description |
 |------|--------|-------------|
 | `register_host` | `game_id`, `host_token` | Host registers for signaling |
-| `request_join` | `game_id` | Client requests to join |
+| `request_join` | `game_id`, `password`? | Client requests to join (include `password` if game is protected) |
 | `gather_candidates` | `game_id` | Start ICE candidate gathering |
 | `ice_candidate` | `game_id`, `candidate` | Send ICE candidate to peer |
 | `punch_signal` | `game_id`, `target_peer`, `data` | Send NAT punch data |
@@ -344,6 +347,7 @@ Host                    Server                  Joiner
 |-------|-------------|
 | `game_not_found` | Game ID doesn't exist |
 | `game_full` | Game has reached max players |
+| `wrong_password` | Incorrect or missing game password |
 | `invalid_token` | Host token is invalid |
 | `rate_limited` | Too many messages |
 | `invalid_message` | Malformed message |

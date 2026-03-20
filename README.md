@@ -2,7 +2,7 @@
 
 **Let your players host game servers without port forwarding.**
 
-A self-hosted NAT traversal platform for Unity/Mirror games. Players behind closed routers can host and join games — no Steam API, no manual port forwarding, no relay service fees (well, maybe some hosting fees).
+A self-hosted NAT traversal platform for **Unity/Mirror** and **Godot 4** games. Players behind closed routers can host and join games — no Steam API, no manual port forwarding, no relay service fees (well, maybe some hosting fees).
 
 > **Note:** This project is in early alpha. Expect bugs, breaking changes, and incomplete features. Contributions welcome!
 
@@ -111,6 +111,31 @@ transport.StartClient();
 
 See [docs/unity-sdk.md](docs/unity-sdk.md) for full integration guide.
 
+## Godot Integration
+
+```gdscript
+# Add a NATClient node to your scene, then:
+@onready var nat: NATClient = $NATClient
+
+func _ready():
+    nat.server_url = "https://your-server.com"
+    nat.api_key = "your-api-key"
+    nat.game_hosted.connect(func(id, code, token):
+        print("Share this code: ", code)
+    )
+    nat.connection_established.connect(func(endpoint):
+        print("Connected: ", endpoint)
+    )
+
+func host():
+    nat.host_game({"name": "My Game", "max_players": 4})
+
+func join(code: String):
+    nat.join_game(code)
+```
+
+See [docs/godot-sdk.md](docs/godot-sdk.md) for full integration guide.
+
 ## Documentation
 
 | Document | Description |
@@ -122,6 +147,7 @@ See [docs/unity-sdk.md](docs/unity-sdk.md) for full integration guide.
 | [API Reference](docs/api-reference.md) | REST & WebSocket API |
 | [Architecture](docs/architecture.md) | System design deep dive |
 | [Unity SDK](docs/unity-sdk.md) | Unity/Mirror integration |
+| [Godot SDK](docs/godot-sdk.md) | Godot 4.x integration |
 | [Testing](docs/testing.md) | Running and writing tests |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues & fixes |
 | [Contributing](docs/contributing.md) | Development guide |
@@ -149,6 +175,7 @@ curl http://localhost:8080/api/games/{id}/turn
 ## Security
 
 - API key authentication for game clients
+- **Password-protected games** — optional per-game passwords (SHA-256 hashed, validated at signaling layer)
 - HTTP Basic Auth for admin dashboard
 - HMAC-SHA1 TURN credentials (time-limited, per-session)
 - Multi-layer rate limiting (global, per-IP, per-endpoint)

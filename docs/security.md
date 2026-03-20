@@ -7,6 +7,7 @@ Hardening NAT Punchthrough Hero for production.
 | Threat | Impact | Mitigation |
 |--------|--------|------------|
 | Unauthorized game registration | Spam/fake games | API key authentication |
+| Unauthorized game joining | Unwanted players | Optional per-game passwords (SHA-256 hashed) |
 | IP harvesting from game list | Player privacy | Minimal public data, no IPs exposed |
 | DDoS on API | Service availability | Multi-layer rate limiting, auto-block |
 | coturn as open relay | Bandwidth abuse, SSRF | denied-peer-ip rules, quotas |
@@ -31,6 +32,12 @@ game_api_key = "your-key-here"
 ```
 
 If `game_api_key` is empty, API authentication is **disabled** (development mode).
+
+### Game Passwords (Per-Game)
+
+Games can optionally be password-protected. When hosting, set the `password` field in the registration request. The server stores a SHA-256 hash — the plaintext password is never persisted or returned in any API response.
+
+When joining via WebSocket signaling, the client sends the password in the `request_join` message. The server validates it before initiating the NAT punch session. Returns `wrong_password` on failure — the same error whether the password is missing or incorrect, to avoid leaking which games are password-protected.
 
 ### Admin Dashboard (HTTP Basic Auth)
 

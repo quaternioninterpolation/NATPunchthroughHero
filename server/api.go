@@ -201,6 +201,7 @@ type CreateGameRequest struct {
 	MaxPlayers     int             `json:"max_players"`
 	CurrentPlayers int             `json:"current_players"`
 	Private        bool            `json:"private"`
+	Password       string          `json:"password"` // Optional; plaintext in request, stored as SHA-256 hash
 	HostPort       int             `json:"host_port"`
 	LocalIP        string          `json:"local_ip"`
 	LocalPort      int             `json:"local_port"`
@@ -252,12 +253,22 @@ func (s *Server) handleCreateGame(w http.ResponseWriter, r *http.Request) {
 		curPlayers = 1
 	}
 
+	// Hash password if provided (max 128 chars)
+	var passwordHash string
+	if req.Password != "" {
+		if len(req.Password) > 128 {
+			req.Password = req.Password[:128]
+		}
+		passwordHash = HashPassword(req.Password)
+	}
+
 	game := &Game{
 		Name:        req.Name,
 		Map:         req.Map,
 		GameVersion: req.GameVersion,
 		MaxPlayers:  req.MaxPlayers,
 		Private:     req.Private,
+		Password:    passwordHash,
 		HostIP:      ip,
 		HostPort:    req.HostPort,
 		LocalIP:     req.LocalIP,

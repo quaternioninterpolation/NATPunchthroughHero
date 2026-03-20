@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(go build:*)",
-      "Bash(go test:*)"
+      "Bash(go test:*)",
+      "Bash(grep -r \"join_code\\\\|JoinCode\" /f/Dev/NATPunchthroughHero/server/*.go)",
+      "Bash(grep -r \"generateJoinCode\\\\|generateGameID\\\\|generateHostToken\" /f/Dev/NATPunchthroughHero/server/*.go)",
+      "Bash(wc -l /f/Dev/NATPunchthroughHero/unity-sdk/Runtime/*.cs)"
     ]
   }
 }
