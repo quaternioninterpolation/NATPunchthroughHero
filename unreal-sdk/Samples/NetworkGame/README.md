@@ -1,26 +1,24 @@
-# NAT Punchthrough Hero - Unreal Engine Sample
+# Sample: Network Game
 
-This sample demonstrates hosting and joining a game using the NAT Punchthrough Hero plugin.
+Minimal host/join example using the NAT Punchthrough Hero plugin.
 
 ## Files
 
-- **SampleNetworkGameMode** - Game mode that hosts a game session on BeginPlay and displays connection info on screen.
-- **SamplePlayerController** - Player controller with `JoinByCode()` to join an existing game via NAT traversal.
+- **SampleNetworkGameMode** — Hosts a game on `BeginPlay`, displays join code on screen.
+- **SamplePlayerController** — Client-side join via `JoinByCode()`.
 
 ## Setup
 
-1. Copy the `NATpunchthrough` plugin to your project's `Plugins/` folder.
-2. Enable the plugin in your `.uproject` file or via Edit > Plugins.
-3. Set `SampleNetworkGameMode` as your Game Mode in World Settings.
-4. Configure `MasterServerUrl` and optionally `ApiKey` in the game mode's details panel.
-5. Play in editor — the join code will display on screen.
+1. Install the `NATpunchthrough` plugin in your project's `Plugins/` folder.
+2. Set `SampleNetworkGameMode` as your Game Mode in World Settings.
+3. Set `MasterServerUrl` (and `ApiKey` if needed) in the game mode's Details panel.
+4. Play in editor — the join code appears on screen.
 
-## Joining from Another Client
+## Joining
 
-Use `SamplePlayerController` or call `JoinByCode` from Blueprints/C++:
+From a second client, call `JoinByCode` on the player controller:
 
 ```cpp
-// From any actor with a reference to the player controller:
 ASamplePlayerController* PC = Cast<ASamplePlayerController>(GetWorld()->GetFirstPlayerController());
 if (PC)
 {
@@ -28,6 +26,4 @@ if (PC)
 }
 ```
 
-## Blueprint Usage
-
-Both `UNATClient` and its sub-components expose all methods and events as `BlueprintCallable`/`BlueprintAssignable`, so you can use them directly in Blueprint graphs without writing C++.
+Both classes expose all methods to Blueprints — no C++ required.
