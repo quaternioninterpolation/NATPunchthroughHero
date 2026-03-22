@@ -2,7 +2,7 @@
 
 **Let your players host game servers without port forwarding.**
 
-A self-hosted NAT traversal platform for **Unity/Mirror** and **Godot 4** games. Players behind closed routers can host and join games — no Steam API, no manual port forwarding, no relay service fees (well, maybe some hosting fees).
+A self-hosted NAT traversal platform for **Unity/Mirror**, **Godot 4**, and **Unreal Engine** games. Players behind closed routers can host and join games — no Steam API, no manual port forwarding, no relay service fees (well, maybe some hosting fees).
 
 > **Note:** This project is in early alpha. Expect bugs, breaking changes, and incomplete features. Contributions welcome!
 
@@ -136,6 +136,30 @@ func join(code: String):
 
 See [docs/godot-sdk.md](docs/godot-sdk.md) for full integration guide.
 
+## Unreal Engine Integration
+
+```cpp
+// Add UNATClient component to any Actor
+UNATClient* NATClient = CreateDefaultSubobject<UNATClient>(TEXT("NATClient"));
+NATClient->ServerUrl = TEXT("https://your-server.com");
+NATClient->ApiKey = TEXT("your-api-key");
+
+// Host a game
+FGameRegistration Info;
+Info.Name = TEXT("My Game");
+Info.MaxPlayers = 4;
+NATClient->HostGame(Info);
+
+// Join a game
+NATClient->JoinGame(TEXT("ABC123"));
+
+// Bind events
+NATClient->OnGameHosted.AddDynamic(this, &AMyActor::OnHosted);
+NATClient->OnConnectionEstablished.AddDynamic(this, &AMyActor::OnConnected);
+```
+
+See [docs/unreal-sdk.md](docs/unreal-sdk.md) for full integration guide.
+
 ## Documentation
 
 | Document | Description |
@@ -148,6 +172,7 @@ See [docs/godot-sdk.md](docs/godot-sdk.md) for full integration guide.
 | [Architecture](docs/architecture.md) | System design deep dive |
 | [Unity SDK](docs/unity-sdk.md) | Unity/Mirror integration |
 | [Godot SDK](docs/godot-sdk.md) | Godot 4.x integration |
+| [Unreal SDK](docs/unreal-sdk.md) | Unreal Engine integration |
 | [Testing](docs/testing.md) | Running and writing tests |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues & fixes |
 | [Contributing](docs/contributing.md) | Development guide |

@@ -91,6 +91,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /admin", s.adminAuth(s.handleDashboard))
 	mux.HandleFunc("GET /admin/", s.adminAuth(s.handleDashboard))
 
+
 	// Root redirect
 	mux.HandleFunc("GET /", s.handleRoot)
 
@@ -513,6 +514,8 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Write(dashboardHTML)
 }
+
+
 
 func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {

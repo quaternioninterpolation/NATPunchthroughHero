@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "NAT Punchthrough Hero",
+	"Description": "NAT traversal plugin for Unreal Engine providing UDP hole punching, STUN discovery, UPnP port mapping, and TURN relay fallback for peer-to-peer multiplayer.",
+	"Category": "Networking",
+	"CreatedBy": "NAT Punchthrough Hero",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "NATpunchthrough",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
